@@ -1,0 +1,27 @@
+dist: trusty
+
+notifications:
+  email:
+    - mum4k-ci@elohim.sk
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - pkg-config
+      - python
+      - python-pip
+      - unzip
+      - wget
+      - zip
+
+before_install:
+  - wget https://github.com/bazelbuild/bazel/releases/download/0.4.5/bazel_0.4.5-linux-x86_64.deb
+  - sha256sum -c bazel/bazel_0.4.5-linux-x86_64.deb.sha256
+  - sudo dpkg -i bazel_0.4.5-linux-x86_64.deb
+  - sudo /usr/bin/pip install platformio
+
+script:
+  - bazel build //...
+  - bazel test //...

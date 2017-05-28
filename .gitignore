@@ -1,0 +1,5 @@
+# Ignore the bazel created symlinks.
+/bazel-*
+
+# Ignore vim swap files.
+*.swp
