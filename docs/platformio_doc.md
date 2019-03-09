@@ -254,9 +254,6 @@ Emits a Bazel action that unzips the libraries and builds the project.
       <td><code>ctx</code></td>
       <td>
         required.
-        <p>
-          The Skylark context.
-        </p>
       </td>
     </tr>
     <tr id="_emit_build_action-project_dir>
@@ -284,7 +281,6 @@ Emits a Bazel action that produces executable script.
 When the script is executed, the compiled firmware gets uploaded to the
 Arduino device.
 
-
 ### Parameters
 
 <table class="params-table">
@@ -297,9 +293,6 @@ Arduino device.
       <td><code>ctx</code></td>
       <td>
         required.
-        <p>
-          The Skylark context.
-        </p>
       </td>
     </tr>
   </tbody>
@@ -326,9 +319,6 @@ Emits a Bazel action that generates the PlatformIO configuration file.
       <td><code>ctx</code></td>
       <td>
         required.
-        <p>
-          The Skylark context.
-        </p>
       </td>
     </tr>
   </tbody>
@@ -355,9 +345,6 @@ Emits a Bazel action that outputs the project main C++ file.
       <td><code>ctx</code></td>
       <td>
         required.
-        <p>
-          The Skylark context.
-        </p>
       </td>
     </tr>
   </tbody>
@@ -375,7 +362,6 @@ Collects all transitive dependencies and emits the zip output.
 Outputs a zip file containing the library in the directory structure expected
 by PlatformIO.
 
-
 ### Parameters
 
 <table class="params-table">
@@ -388,9 +374,6 @@ by PlatformIO.
       <td><code>ctx</code></td>
       <td>
         required.
-        <p>
-          The Skylark context.
-        </p>
       </td>
     </tr>
   </tbody>
@@ -412,7 +395,6 @@ is the compiled version of the Arduino firmware for the specified board and
 the firmware_hex is the firmware in the hexadecimal format ready for
 uploading.
 
-
 ### Parameters
 
 <table class="params-table">
@@ -425,9 +407,6 @@ uploading.
       <td><code>ctx</code></td>
       <td>
         required.
-        <p>
-          The Skylark context.
-        </p>
       </td>
     </tr>
   </tbody>
