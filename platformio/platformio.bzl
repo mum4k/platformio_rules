@@ -22,30 +22,25 @@ These are Bazel Skylark rules for building and uploading
 
 
 # The relative filename of the header file.
-_HEADER_FILENAME = "lib/{dirname}/{filename}.h"
+_HEADER_FILENAME = "{dirname}/{filename}.h"
 
 
 # The relative filename of the source file.
-_SOURCE_FILENAME = "lib/{dirname}/{filename}.cpp"
+_SOURCE_FILENAME = "{dirname}/{filename}.cpp"
 
 
 # The relative filename of an additional file (header or source) defined for a
 # platformio_library target.
-_ADDITIONAL_FILENAME = "lib/{dirname}/{filename}"
+_ADDITIONAL_FILENAME = "{dirname}/{filename}"
 
 
 # Command that copies the source to the destination.
-_COPY_COMMAND="/bin/cp {source} {destination}"
+# The -R signifies that all files in the source directory will be recursively
+# copied to the destination directory.
+_COPY_COMMAND="/bin/cp -R -v {source} {destination}"
 
-
-# Command that zips files recursively. It enters the output directory first so
-# that the zipped path starts at lib/.
-_ZIP_COMMAND="cd {output_dir} && /usr/bin/zip -r -u {zip_filename} lib/"
-
-
-# Command that unzips a zip archive into the specified directory.
-_UNZIP_COMMAND="/usr/bin/unzip -o -d {project_dir} {zip_filename}"
-
+# Command that creates the specified directory including any missing parent directories.
+_MKDIR_COMMAND="/bin/mkdir -v -p {dir}"
 
 # Command that executes the PlatformIO build system and builds the project in
 # the specified directory.
@@ -63,31 +58,34 @@ _SHELL_HEADER="#!/bin/bash"
 
 
 def _platformio_library_impl(ctx):
-  """Collects all transitive dependencies and emits the zip output.
+  """Collects all transitive dependencies and emits a directory.
 
-  Outputs a zip file containing the library in the directory structure expected
-  by PlatformIO.
+  Outputs a directory with all the files of this library in the directory
+  structure expected by PlatformIO.
 
   Args:
     ctx: The Skylark context.
   """
   name = ctx.label.name
 
+  # Create directory for the library.
+  commands = [_MKDIR_COMMAND.format(dir=ctx.outputs.lib_directory.path)]
+  outputs = [ctx.outputs.lib_directory]
+
   # Copy the header file to the desired destination.
   header_file = ctx.new_file(
       _HEADER_FILENAME.format(dirname=name, filename=name))
   inputs = [ctx.file.hdr]
-  outputs = [header_file]
-  commands = [_COPY_COMMAND.format(
-      source=ctx.file.hdr.path, destination=header_file.path)]
+  outputs.append(header_file)
+  commands.append(_COPY_COMMAND.format(
+      source=ctx.file.hdr.path, destination=header_file.path))
 
   # Copy all the additional header and source files.
   for additional_files in [ctx.attr.add_hdrs, ctx.attr.add_srcs]:
     for target in additional_files:
       for f in target.files:
         # The name of the label is the relative path to the file, this enables us
-        # to prepend "lib/" to the path. For PlatformIO, all the library files
-        # must be under lib/...
+        # to prepend the name to the path.
         additional_file_name = f.short_path # The file's name.
         additional_file_source = f
         additional_file_destination = ctx.new_file(
@@ -106,25 +104,21 @@ def _platformio_library_impl(ctx):
     outputs.append(source_file)
     commands.append(_COPY_COMMAND.format(
         source=ctx.file.src.path, destination=source_file.path))
- 
-  # Zip the entire content of the library folder.
-  outputs.append(ctx.outputs.zip)
-  commands.append(_ZIP_COMMAND.format(
-      output_dir=ctx.outputs.zip.dirname, zip_filename=ctx.outputs.zip.basename))
+
   ctx.action(
       inputs=inputs,
       outputs=outputs,
       command="\n".join(commands),
   )
 
-  # Collect the zip files produced by all transitive dependancies.
-  transitive_zip_files=depset([ctx.outputs.zip])
+  # Collect the directories produced by all transitive dependencies.
+  transitive_directories=depset([ctx.outputs.lib_directory])
   for dep in ctx.attr.deps:
-    transitive_zip_files = depset(transitive=[
-        transitive_zip_files, dep.transitive_zip_files
+    transitive_directories = depset(transitive=[
+        transitive_directories, dep.transitive_directories
     ])
   return struct(
-    transitive_zip_files=transitive_zip_files,
+    transitive_directories=transitive_directories,
   )
 
 
@@ -169,33 +163,41 @@ def _emit_main_file_action(ctx):
 
 
 def _emit_build_action(ctx, project_dir):
-  """Emits a Bazel action that unzips the libraries and builds the project.
+  """Emits a Bazel action that places the libraries in a "lib" directory and builds the project.
 
   Args:
     ctx: The Skylark context.
     project_dir: A string, the main directory of the PlatformIO project.
-      This is where the zip files will be extracted.
+      This is where the libraries will be copied.
   """
-  transitive_zip_files = depset()
+  transitive_directories = depset()
   for dep in ctx.attr.deps:
-    transitive_zip_files = depset(transitive=[
-        transitive_zip_files, dep.transitive_zip_files
+    transitive_directories = depset(transitive=[
+        transitive_directories, dep.transitive_directories
     ])
 
-  commands = []
-  for zip_file in transitive_zip_files:
-    commands.append(_UNZIP_COMMAND.format(
-        project_dir=project_dir, zip_filename=zip_file.path))
-  commands.append(_BUILD_COMMAND.format(project_dir=project_dir))
+  # Create the directory "lib" that will hold all the libraries.
+  # PlatformIO requires all libraries to be under the "lib" directory.
+  lib_dir = ctx.actions.declare_directory("lib")
+  commands = [_MKDIR_COMMAND.format(dir=lib_dir.path)]
+  outputs= [lib_dir]
 
   # The PlatformIO build system needs the project configuration file, the main
   # file and all the transitive dependancies.
   inputs=[ctx.outputs.platformio_ini, ctx.outputs.main_cpp]
-  for zip_file in transitive_zip_files:
-    inputs.append(zip_file)
+
+  # Copy all libraries to "lib".
+  for library in transitive_directories:
+    commands.append(_COPY_COMMAND.format(
+        source=library.path, destination=lib_dir.path))
+    inputs.append(library)
+  commands.append(_BUILD_COMMAND.format(project_dir=project_dir))
+
+  outputs.append(ctx.outputs.firmware_elf)
+  outputs.append(ctx.outputs.firmware_hex)
   ctx.action(
       inputs=inputs,
-      outputs=[ctx.outputs.firmware_elf, ctx.outputs.firmware_hex],
+      outputs=outputs,
       command="\n".join(commands),
       env={
         # The PlatformIO binary assumes that the build tools are in the path.
@@ -254,7 +256,7 @@ def _platformio_project_impl(ctx):
 platformio_library = rule(
   implementation=_platformio_library_impl,
   outputs = {
-      "zip": "%{name}.zip",
+      "lib_directory": "%{name}",
   },
   attrs={
     "hdr": attr.label(
@@ -270,18 +272,18 @@ platformio_library = rule(
         allow_files=[".h", ".hpp"],
         allow_empty=True,
         doc = """
-A list of labels, additional header files to include in the resulting zip file.
+A list of labels, additional header files to include in the resulting directory.
 """,
     ),
     "add_srcs": attr.label_list(
         allow_files=[".c", ".cc", ".cpp"],
         allow_empty=True,
         doc = """
-A list of labels, additional source files to include in the resulting zip file.
+A list of labels, additional source files to include in the resulting directory.
 """,
     ),
     "deps": attr.label_list(
-        providers=["transitive_zip_files"],
+        providers=["transitive_directories"],
         doc = """
 A list of Bazel targets, other platformio_library targets that this one depends on.
 """,
@@ -307,13 +309,12 @@ platformio_library(
 )
 ```
 
-Will generate a zip file containing the following structure:
+Will generate a directory containing the following structure:
 
 ```
-lib/
-  My_lib/
-    My_lib.h
-    My_lib.cpp
+My_lib/
+  My_lib.h
+  My_lib.cpp
 ```
 
 In the Arduino code, you should include this as follows. The PLATFORMIO_BUILD
@@ -327,8 +328,7 @@ will be set when the library is built by the PlatformIO build system.
 #endif
 ```
 
-Outputs a single zip file containing the C++ library in the directory structure
-expected by PlatformIO.
+Outputs transitive_directories, a directory containing files for this library.
 """
 )
 
@@ -392,7 +392,7 @@ options.
 """,
       ),
       "deps": attr.label_list(
-        providers=["transitive_zip_files"],
+        providers=["transitive_directories"],
         doc = """
 A list of Bazel targets, the platformio_library targets that this one
 depends on.
