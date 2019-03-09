@@ -36,7 +36,7 @@ cc_test(
     srcs = ["led_display_test.cc"],
     deps = [
         ":led_display",
-        "//external:gtest_main",
+        "@com_google_googletest//:gtest_main",
         "//tests/arduino:arduino_interface_mock",
     ],
 )

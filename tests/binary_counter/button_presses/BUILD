@@ -35,7 +35,7 @@ cc_test(
     srcs = ["button_presses_test.cc"],
     deps = [
         ":button_presses",
-        "//external:gtest_main",
+        "@com_google_googletest//:gtest_main",
         "//tests/arduino:arduino_interface_mock",
     ],
 )

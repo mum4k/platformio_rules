@@ -7,5 +7,10 @@ filegroup(
     srcs = ["platformio.ini.tmpl"],
 )
 
-# For SkyDoc documentation.
-exports_files(["platformio.bzl"])
+load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
+
+stardoc(
+    name = "platformio_docs",
+    input = "platformio.bzl",
+    out = "platformio_doc.md",
+)

@@ -63,14 +63,13 @@ _SHELL_HEADER="#!/bin/bash"
 
 
 def _platformio_library_impl(ctx):
-  """Collects all transitive dependancies and emits the zip output.
+  """Collects all transitive dependencies and emits the zip output.
+
+  Outputs a zip file containing the library in the directory structure expected
+  by PlatformIO.
 
   Args:
     ctx: The Skylark context.
-
-  Outputs:
-    zip: A zip file containing the library in the directory structure expected
-    by PlatformIO.
   """
   name = ctx.label.name
 
@@ -235,16 +234,15 @@ def _emit_executable_action(ctx):
 def _platformio_project_impl(ctx):
   """Builds and optionally uploads (when executed) a PlatformIO project.
 
+  Outputs the C++ source file containing the Arduino setup() and loop()
+  functions renamed according to PlatformIO needs, a platformio_ini with the
+  project configuration file for PlatformIO and the firmware. The firmware_elf
+  is the compiled version of the Arduino firmware for the specified board and
+  the firmware_hex is the firmware in the hexadecimal format ready for
+  uploading.
+
   Args:
     ctx: The Skylark context.
-
-  Outputs:
-    main_cpp: The C++ source file containing the Arduino setup() and loop()
-      functions renamed according to PlatformIO needs.
-    platformio_ini: The project configuration file for PlatformIO.
-    firmware_elf: The compiled version of the Arduino firmware for the specified
-      board.
-    firmware_hex: The firmware in the hexadecimal format ready for uploading.
   """
   _emit_ini_file_action(ctx)
   _emit_main_file_action(ctx)
@@ -265,24 +263,35 @@ platformio_library = rule(
     "hdr": attr.label(
         allow_single_file=[".h", ".hpp"],
         mandatory=True,
+        doc = "A string, the name of the C++ header file. This is mandatory.",
     ),
     "src": attr.label(
         allow_single_file=[".c", ".cc", ".cpp"],
+        doc = "A string, the name of the C++ source file. This is optional.",
     ),
     "add_hdrs": attr.label_list(
         allow_files=[".h", ".hpp"],
         allow_empty=True,
+        doc = """
+A list of labels, additional header files to include in the resulting zip file.
+""",
     ),
     "add_srcs": attr.label_list(
         allow_files=[".c", ".cc", ".cpp"],
         allow_empty=True,
+        doc = """
+A list of labels, additional source files to include in the resulting zip file.
+""",
     ),
     "deps": attr.label_list(
         providers=["transitive_zip_files"],
+        doc = """
+A list of Bazel targets, other platformio_library targets that this one depends on.
+""",
     ),
   },
-)
-"""Defines a C++ library that can be imported in an PlatformIO project.
+  doc = """
+Defines a C++ library that can be imported in an PlatformIO project.
 
 The PlatformIO build system requires a set project directory structure. All
 libraries must be under the lib directory. Furthermore all libraries can only
@@ -291,6 +300,7 @@ must match the names of the header file, the source file and the subdirectory
 under the lib directory.
 
 If you have a C++ library with files my_lib.h and my_lib.cc, using this rule:
+
 ```
 platformio_library(
     # Start with an uppercase letter to keep the Arduino naming style.
@@ -301,6 +311,7 @@ platformio_library(
 ```
 
 Will generate a zip file containing the following structure:
+
 ```
 lib/
   My_lib/
@@ -310,6 +321,7 @@ lib/
 
 In the Arduino code, you should include this as follows. The PLATFORMIO_BUILD
 will be set when the library is built by the PlatformIO build system.
+
 ```
 #ifdef PLATFORMIO_BUILD
 #include <My_lib.h>  // This is how PlatformIO sees and includes the library.
@@ -318,22 +330,10 @@ will be set when the library is built by the PlatformIO build system.
 #endif
 ```
 
-Args:
-  name: A string, the unique name for this rule. Start with an uppercase letter
-    and use underscores between words.
-  hdr: A string, the name of the C++ header file. This is mandatory.
-  src: A string, the name of the C++ source file. This is optional.
-  add_hdrs: A list of labels, additional header files to include in the
-    resulting zip file.
-  add_srcs: A list of labels, additional source files to include in the
-    resulting zip file.
-  deps: A list of Bazel targets, other platformio_library targets that this one
-    depends on.
-
-Outputs:
-  zip: A single zip file containing the C++ library in the directory structure
-    expected by PlatformIO.
+Outputs a single zip file containing the C++ library in the directory structure
+expected by PlatformIO.
 """
+)
 
 platformio_project = rule(
     implementation=_platformio_project_impl,
@@ -352,19 +352,61 @@ platformio_project = rule(
       "src": attr.label(
         allow_single_file=[".cc"],
         mandatory=True,
+        doc = """
+A string, the name of the C++ source file, the main file for 
+the project that contains the Arduino setup() and loop() functions. This is mandatory.
+""",
       ),
-      "board": attr.string(mandatory=True),
-      "platform": attr.string(default="atmelavr"),
-      "framework": attr.string(default="arduino"),
-      "environment_kwargs": attr.string_dict(allow_empty=True),
+      "board": attr.string(
+        mandatory=True,
+        doc = """
+A string, name of the Arduino board to build this project for. You can
+find the supported boards in the
+[PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is
+mandatory.
+""",
+      ),
+      "platform": attr.string(
+        default="atmelavr",
+        doc = """
+A string, the name of the
+[development platform](
+http://docs.platformio.org/en/latest/platforms/index.html#platforms) for
+this project.
+""",
+      ),
+      "framework": attr.string(
+        default="arduino",
+        doc = """
+A string, the name of the
+[framework](
+http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for
+this project.
+""",
+      ),
+      "environment_kwargs": attr.string_dict(
+        allow_empty=True,
+        doc = """
+A dictionary of strings to strings, any provided keys and
+values will directly appear in the generated platformio.ini file under the
+env:board section. Refer to the [Project Configuration File manual](
+http://docs.platformio.org/en/latest/projectconf.html) for the available
+options.
+""",
+      ),
       "deps": attr.label_list(
         providers=["transitive_zip_files"],
+        doc = """
+A list of Bazel targets, the platformio_library targets that this one
+depends on.
+""",
       ),
     },
-)
-"""Defines a project that will be built and uploaded using PlatformIO.
+    doc = """
+Defines a project that will be built and uploaded using PlatformIO.
 
 Creates, configures and runs a PlatformIO project. This is equivalent to running:
+
 ```
 platformio run
 ```
@@ -373,35 +415,12 @@ This rule is executable and when executed, it will upload the compiled firmware
 to the connected Arduino device. This is equivalent to running:
 platformio run -t upload
 
-Args:
-  name: A string, the unique name for this rule.
-  src: A string, the name of the C++ source file, the main file for the project
-    that contains the Arduino setup() and loop() functions. This is mandatory.
-  board: A string, name of the Arduino board to build this project for. You can
-    find the supported boards in the
-    [PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is
-    mandatory.
-  platform: A string, the name of the
-    [development platform](
-    http://docs.platformio.org/en/latest/platforms/index.html#platforms) for
-    this project.
-  framework: A string, the name of the
-    [framework](
-    http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for
-    this project.
-  environment_kwargs: A dictionary of strings to strings, any provided keys and
-    values will directly appear in the generated platformio.ini file under the
-    env:board section. Refer to the [Project Configuration File manual](
-    http://docs.platformio.org/en/latest/projectconf.html) for the available
-    options.
-  deps: A list of Bazel targets, the platformio_library targets that this one
-    depends on.
 
-Outputs:
-  main_cpp: The C++ source file containing the Arduino setup() and loop()
-  functions renamed according to PlatformIO needs.
-  platformio_ini: The project configuration file for PlatformIO.
-  firmware_elf: The compiled version of the Arduino firmware for the specified
-    board.
-  firmware_hex: The firmware in the hexadecimal format ready for upload.
+Outputs the C++ source file containing the Arduino setup() and loop()
+functions renamed according to PlatformIO needs, a platformio_ini with the
+project configuration file for PlatformIO and the firmware. The firmware_elf
+is the compiled version of the Arduino firmware for the specified board and
+the firmware_hex is the firmware in the hexadecimal format ready for
+uploading.
 """
+)
