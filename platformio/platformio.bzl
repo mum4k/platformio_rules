@@ -263,14 +263,14 @@ platformio_library = rule(
   },
   attrs={
     "hdr": attr.label(
-        allow_single_file=[".h"],
+        allow_single_file=[".h", ".hpp"],
         mandatory=True,
     ),
     "src": attr.label(
         allow_single_file=[".c", ".cc", ".cpp"],
     ),
     "add_hdrs": attr.label_list(
-        allow_files=[".h"],
+        allow_files=[".h", ".hpp"],
         allow_empty=True,
     ),
     "add_srcs": attr.label_list(
