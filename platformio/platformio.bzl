@@ -84,22 +84,19 @@ def _platformio_library_impl(ctx):
   # Copy all the additional header and source files.
   for additional_files in [ctx.attr.add_hdrs, ctx.attr.add_srcs]:
     for target in additional_files:
-      if len(target.files) != 1:
-        fail("each target listed under add_hdrs or add_srcs must expand to " +
-             "exactly one file, this expands to %d: %s" %
-             (len(target.files), target.files))
-      # The name of the label is the relative path to the file, this enables us
-      # to prepend "lib/" to the path. For PlatformIO, all the library files
-      # must be under lib/...
-      additional_file_name = target.label.name
-      additional_file_source = [f for f in target.files][0]
-      additional_file_destination = ctx.new_file(
-        _ADDITIONAL_FILENAME.format(dirname=name, filename=additional_file_name))
-      inputs.append(additional_file_source)
-      outputs.append(additional_file_destination)
-      commands.append(_COPY_COMMAND.format(
-          source=additional_file_source.path,
-          destination=additional_file_destination.path))
+      for f in target.files:
+        # The name of the label is the relative path to the file, this enables us
+        # to prepend "lib/" to the path. For PlatformIO, all the library files
+        # must be under lib/...
+        additional_file_name = f.short_path # The file's name.
+        additional_file_source = f
+        additional_file_destination = ctx.new_file(
+          _ADDITIONAL_FILENAME.format(dirname=name, filename=additional_file_name))
+        inputs.append(additional_file_source)
+        outputs.append(additional_file_destination)
+        commands.append(_COPY_COMMAND.format(
+            source=additional_file_source.path,
+            destination=additional_file_destination.path))
 
   # The src argument is optional, some C++ libraries might only have the header.
   if ctx.attr.src != None:
