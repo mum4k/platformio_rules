@@ -80,8 +80,7 @@ bazel build platformio:platformio_docs
 And then copy the created markdown file:
 
 ```
-cd docs/
-cp $(bazel info bazel-bin)/platformio/platformio_doc.md .
+cp $(bazel info bazel-bin)/platformio/platformio_doc.md docs/
 ```
 
 ## Examples
