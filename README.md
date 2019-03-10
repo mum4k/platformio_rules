@@ -64,7 +64,7 @@ The following rules are defined for PlatformIO:
 *  platformio_library
 *  platformio_project
 
-See the [generated documentation](docs/platformio/platformio.md).
+See the [generated documentation](docs/platformio_doc.md).
 
 ## Rules documentation
 
@@ -74,14 +74,13 @@ directory.
 To rebuild the documentation run:
 
 ```
-bazel build docs:platformio_docs
+bazel build platformio:platformio_docs
 ```
 
-And then unzip the created zip file:
+And then copy the created markdown file:
 
 ```
-cd docs/
-unzip ../bazel-bin/docs/platformio_docs-skydoc.zip
+cp $(bazel info bazel-bin)/platformio/platformio_doc.md docs/
 ```
 
 ## Examples

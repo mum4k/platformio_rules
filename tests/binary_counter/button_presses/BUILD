@@ -17,6 +17,7 @@ load("//platformio:platformio.bzl", "platformio_library")
 package(
     default_visibility = [
         "//tests/binary_counter:__subpackages__",
+        "//tests/binary_counter_espressif8266:__subpackages__",
     ],
 )
 
@@ -35,7 +36,7 @@ cc_test(
     srcs = ["button_presses_test.cc"],
     deps = [
         ":button_presses",
-        "//external:gtest_main",
+        "@com_google_googletest//:gtest_main",
         "//tests/arduino:arduino_interface_mock",
     ],
 )

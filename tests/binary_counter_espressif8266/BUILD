@@ -12,31 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//platformio:platformio.bzl", "platformio_library")
+load("//platformio:platformio.bzl", "platformio_project")
 
-package(
-    default_visibility = ["//tests/binary_counter:__subpackages__"],
-)
-
-cc_library(
-    name = "convert",
-    srcs = ["convert.cc"],
-    hdrs = ["convert.h"],
-    defines = ["NATIVE_BUILD"],
-)
-
-cc_test(
-    name = "convert_test",
-    srcs = ["convert_test.cc"],
-    deps =
-        [
-            ":convert",
-            "@com_google_googletest//:gtest_main",
-        ],
-)
-
-platformio_library(
-    name = "Convert",
-    src = "convert.cc",
-    hdr = "convert.h",
+platformio_project(
+    name = "binary_counter",
+    src = "binary_counter.cc",
+    board = "nodemcuv2",
+    framework = "arduino",
+    platform = "espressif8266",
+    deps = [
+        "//tests/arduino:Arduino_impl",
+        "//tests/arduino:Arduino_interface",
+        "//tests/binary_counter/button_presses:Button_presses",
+        "//tests/binary_counter/led_display:Led_display",
+    ],
 )
