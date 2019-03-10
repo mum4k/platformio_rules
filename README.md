@@ -74,13 +74,13 @@ directory.
 To rebuild the documentation run:
 
 ```
-bazel build platformio:platformio_docs
+bazel build docs:platformio_docs
 ```
 
 And then copy the created markdown file:
 
 ```
-cp $(bazel info bazel-bin)/platformio/platformio_doc.md docs/
+cp $(bazel info bazel-bin)/docs/platformio_doc.md docs/
 ```
 
 ## Examples
