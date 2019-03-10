@@ -408,9 +408,7 @@ Builds and optionally uploads (when executed) a PlatformIO project.
 Outputs the C++ source file containing the Arduino setup() and loop()
 functions renamed according to PlatformIO needs, a platformio_ini with the
 project configuration file for PlatformIO and the firmware. The firmware_elf
-is the compiled version of the Arduino firmware for the specified board and
-the firmware_hex is the firmware in the hexadecimal format ready for
-uploading.
+is the compiled version of the Arduino firmware for the specified board.
 
 
 ### Parameters
