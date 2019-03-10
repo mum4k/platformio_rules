@@ -17,6 +17,7 @@ load("//platformio:platformio.bzl", "platformio_library")
 package(
     default_visibility = [
         "//tests/binary_counter:__subpackages__",
+        "//tests/binary_counter_espressif8266:__subpackages__",
     ],
 )
 

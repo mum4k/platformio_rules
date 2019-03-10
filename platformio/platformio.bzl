@@ -195,7 +195,7 @@ def _emit_build_action(ctx, project_dir):
     inputs.append(zip_file)
   ctx.action(
       inputs=inputs,
-      outputs=[ctx.outputs.firmware_elf, ctx.outputs.firmware_hex],
+      outputs=[ctx.outputs.firmware_elf],
       command="\n".join(commands),
       env={
         # The PlatformIO binary assumes that the build tools are in the path.
@@ -234,9 +234,7 @@ def _platformio_project_impl(ctx):
   Outputs the C++ source file containing the Arduino setup() and loop()
   functions renamed according to PlatformIO needs, a platformio_ini with the
   project configuration file for PlatformIO and the firmware. The firmware_elf
-  is the compiled version of the Arduino firmware for the specified board and
-  the firmware_hex is the firmware in the hexadecimal format ready for
-  uploading.
+  is the compiled version of the Arduino firmware for the specified board.
 
   Args:
     ctx: The Skylark context.
@@ -339,7 +337,6 @@ platformio_project = rule(
       "main_cpp": "src/main.cpp",
       "platformio_ini": "platformio.ini",
       "firmware_elf": ".pioenvs/%{board}/firmware.elf",
-      "firmware_hex": ".pioenvs/%{board}/firmware.hex",
     },
     attrs={
       "_platformio_ini_tmpl": attr.label(
