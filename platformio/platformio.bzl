@@ -74,7 +74,7 @@ def _platformio_library_impl(ctx):
   name = ctx.label.name
 
   # Copy the header file to the desired destination.
-  header_file = ctx.new_file(
+  header_file = ctx.actions.declare_file(
       _HEADER_FILENAME.format(dirname=name, filename=name))
   inputs = [ctx.file.hdr]
   outputs = [header_file]
@@ -84,7 +84,7 @@ def _platformio_library_impl(ctx):
   # Copy all the additional header and source files.
   for additional_files in [ctx.attr.add_hdrs, ctx.attr.add_srcs]:
     for target in additional_files:
-      if len(target.files) != 1:
+      if len(target.files.to_list()) != 1:
         fail("each target listed under add_hdrs or add_srcs must expand to " +
              "exactly one file, this expands to %d: %s" %
              (len(target.files), target.files))
@@ -92,8 +92,8 @@ def _platformio_library_impl(ctx):
       # to prepend "lib/" to the path. For PlatformIO, all the library files
       # must be under lib/...
       additional_file_name = target.label.name
-      additional_file_source = [f for f in target.files][0]
-      additional_file_destination = ctx.new_file(
+      additional_file_source = [f for f in target.files.to_list()][0]
+      additional_file_destination = ctx.actions.declare_file(
         _ADDITIONAL_FILENAME.format(dirname=name, filename=additional_file_name))
       inputs.append(additional_file_source)
       outputs.append(additional_file_destination)
@@ -103,7 +103,7 @@ def _platformio_library_impl(ctx):
 
   # The src argument is optional, some C++ libraries might only have the header.
   if ctx.attr.src != None:
-    source_file = ctx.new_file(
+    source_file = ctx.actions.declare_file(
         _SOURCE_FILENAME.format(dirname=name, filename=name))
     inputs.append(ctx.file.src)
     outputs.append(source_file)
@@ -114,7 +114,7 @@ def _platformio_library_impl(ctx):
   outputs.append(ctx.outputs.zip)
   commands.append(_ZIP_COMMAND.format(
       output_dir=ctx.outputs.zip.dirname, zip_filename=ctx.outputs.zip.basename))
-  ctx.action(
+  ctx.actions.run_shell(
       inputs=inputs,
       outputs=outputs,
       command="\n".join(commands),
@@ -145,7 +145,7 @@ def _emit_ini_file_action(ctx):
     if key == "" or value == "":
       continue
     environment_kwargs.append("{key} = {value}".format(key=key, value=value))
-  ctx.template_action(
+  ctx.actions.expand_template(
       template=ctx.file._platformio_ini_tmpl,
       output=ctx.outputs.platformio_ini,
       substitutions={
@@ -163,7 +163,7 @@ def _emit_main_file_action(ctx):
   Args:
     ctx: The Skylark context.
   """
-  ctx.action(
+  ctx.actions.run_shell(
       inputs=[ctx.file.src],
       outputs=[ctx.outputs.main_cpp],
       command=_COPY_COMMAND.format(
@@ -186,7 +186,7 @@ def _emit_build_action(ctx, project_dir):
     ])
 
   commands = []
-  for zip_file in transitive_zip_files:
+  for zip_file in transitive_zip_files.to_list():
     commands.append(_UNZIP_COMMAND.format(
         project_dir=project_dir, zip_filename=zip_file.path))
   commands.append(_BUILD_COMMAND.format(project_dir=project_dir))
@@ -194,9 +194,9 @@ def _emit_build_action(ctx, project_dir):
   # The PlatformIO build system needs the project configuration file, the main
   # file and all the transitive dependancies.
   inputs=[ctx.outputs.platformio_ini, ctx.outputs.main_cpp]
-  for zip_file in transitive_zip_files:
+  for zip_file in transitive_zip_files.to_list():
     inputs.append(zip_file)
-  ctx.action(
+  ctx.actions.run_shell(
       inputs=inputs,
       outputs=[ctx.outputs.firmware_elf],
       command="\n".join(commands),
@@ -224,10 +224,10 @@ def _emit_executable_action(ctx):
   # directory is project_name.runfiles/__main__ so we need to go two dirs up.
   # This however won't work when executed directly.
   content=[_SHELL_HEADER, _UPLOAD_COMMAND.format(project_dir="../..")]
-  ctx.file_action(
+  ctx.actions.write(
       output=ctx.outputs.executable,
       content="\n".join(content),
-      executable=True,
+      is_executable=True,
   )
 
 
