@@ -339,7 +339,7 @@ platformio_project = rule(
     outputs = {
       "main_cpp": "src/main.cpp",
       "platformio_ini": "platformio.ini",
-      "firmware_elf": ".pioenvs/%{board}/firmware.elf",
+      "firmware_elf": ".pio/build/%{board}/firmware.elf",
     },
     attrs={
       "_platformio_ini_tmpl": attr.label(
