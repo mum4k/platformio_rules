@@ -145,6 +145,12 @@ def _emit_ini_file_action(ctx):
     if key == "" or value == "":
       continue
     environment_kwargs.append("{key} = {value}".format(key=key, value=value))
+
+  build_flags = []
+  for flag in ctx.attr.build_flags:
+      if flag == "":
+          continue
+      build_flags.append(flag)
   ctx.actions.expand_template(
       template=ctx.file._platformio_ini_tmpl,
       output=ctx.outputs.platformio_ini,
@@ -153,6 +159,7 @@ def _emit_ini_file_action(ctx):
           "%platform%": ctx.attr.platform,
           "%framework%": ctx.attr.framework,
           "%environment_kwargs%": "\n".join(environment_kwargs),
+          "%build_flags%": " ".join(build_flags),
       },
   )
 
@@ -386,6 +393,16 @@ this project.
         doc = """
 A dictionary of strings to strings, any provided keys and
 values will directly appear in the generated platformio.ini file under the
+env:board section. Refer to the [Project Configuration File manual](
+http://docs.platformio.org/en/latest/projectconf.html) for the available
+options.
+""",
+      ),
+      "build_flags": attr.string_list(
+        allow_empty = True,
+        doc = """
+A list of strings, any provided strings will directly appear in the
+generated platformio.ini file in the build_flags option for the selected
 env:board section. Refer to the [Project Configuration File manual](
 http://docs.platformio.org/en/latest/projectconf.html) for the available
 options.
