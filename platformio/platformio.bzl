@@ -40,21 +40,21 @@ _COPY_COMMAND="cp {source} {destination}"
 
 # Command that zips files recursively. It enters the output directory first so
 # that the zipped path starts at lib/.
-_ZIP_COMMAND="cd {output_dir} && zip -r -u {zip_filename} lib/"
+_ZIP_COMMAND="cd {output_dir} && zip -qq -r -u {zip_filename} lib/"
 
 
 # Command that unzips a zip archive into the specified directory.
-_UNZIP_COMMAND="unzip -o -d {project_dir} {zip_filename}"
+_UNZIP_COMMAND="unzip -qq -o -d {project_dir} {zip_filename}"
 
 
 # Command that executes the PlatformIO build system and builds the project in
 # the specified directory.
-_BUILD_COMMAND="platformio run -d {project_dir}"
+_BUILD_COMMAND="platformio run -s -d {project_dir}"
 
 
 # Command that executes the PlatformIO build system and uploads the compiled
 # firmware to the device.
-_UPLOAD_COMMAND="platformio run -d {project_dir} -t upload"
+_UPLOAD_COMMAND="platformio run -s -d {project_dir} -t upload"
 
 
 # Header used in the shell script that makes platformio_project executable.
