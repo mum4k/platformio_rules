@@ -36,11 +36,13 @@ where they are needed.
 
 ### Modify the WORPSPACE file
 
+See [Releases](https://github.com/mum4k/platformio_rules/releases) for the most up to date version to substitute for `tag`.
+
 ```
 git_repository(
     name = "platformio_rules",
     remote = "http://github.com/mum4k/platformio_rules.git",
-    tag = "v0.0.1",
+    tag = "v0.0.9",
 )
 ```
 
