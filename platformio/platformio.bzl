@@ -210,6 +210,9 @@ def _emit_build_action(ctx, project_dir):
       env={
         # The PlatformIO binary assumes that the build tools are in the path.
         "PATH":"/bin:/usr/bin:/usr/local/bin:/usr/sbin:/sbin",
+        "LC_ALL":"C.UTF-8",
+        "LANG":"C.UTF-8",
+ 
       },
       execution_requirements={
         # PlatformIO cannot be executed in a sandbox.
