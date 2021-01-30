@@ -34,7 +34,7 @@ In order to use these Bazel rules, you must add this git repository to your
 WORKSPACE file and load the platformio rule definition in every BUILD file
 where they are needed.
 
-### Modify the WORPSPACE file
+### Modify the WORKSPACE file
 
 See [Releases](https://github.com/mum4k/platformio_rules/releases) for the most up to date version to substitute for `tag`.
 
