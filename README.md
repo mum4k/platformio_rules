@@ -39,6 +39,8 @@ where they are needed.
 See [Releases](https://github.com/mum4k/platformio_rules/releases) for the most up to date version to substitute for `tag`.
 
 ```
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
 git_repository(
     name = "platformio_rules",
     remote = "http://github.com/mum4k/platformio_rules.git",
