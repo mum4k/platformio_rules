@@ -1,6 +1,6 @@
 # PlatformIO Bazel rules
 
-[![Build Status](https://travis-ci.com/mum4k/platformio_rules.svg?branch=master)](https://travis-ci.org/mum4k/platformio_rules)
+[![Build Status](https://travis-ci.com/mum4k/platformio_rules.svg?branch=master)](https://travis-ci.com/mum4k/platformio_rules)
 
 These are Bazel Skylark rules for building and uploading
 [Arduino](https://www.arduino.cc/) programs using the
