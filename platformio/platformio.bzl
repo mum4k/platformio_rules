@@ -121,13 +121,11 @@ def _platformio_library_impl(ctx):
   )
 
   # Collect the zip files produced by all transitive dependancies.
-  transitive_zip_files=depset([ctx.outputs.zip])
-  for dep in ctx.attr.deps:
-    transitive_zip_files = depset(transitive=[
-        transitive_zip_files, dep.transitive_zip_files
-    ])
-  return struct(
-    transitive_zip_files=transitive_zip_files,
+  transitive_zip_files=[dep[DefaultInfo].default_runfiles for dep in ctx.attr.deps]
+  runfiles=ctx.runfiles(files=[ctx.outputs.zip])
+  runfiles=runfiles.merge_all(transitive_zip_files)
+  return DefaultInfo(
+    default_runfiles=runfiles,
   )
 
 
@@ -186,11 +184,7 @@ def _emit_build_action(ctx, project_dir):
     project_dir: A string, the main directory of the PlatformIO project.
       This is where the zip files will be extracted.
   """
-  transitive_zip_files = depset()
-  for dep in ctx.attr.deps:
-    transitive_zip_files = depset(transitive=[
-        transitive_zip_files, dep.transitive_zip_files
-    ])
+  transitive_zip_files=depset(transitive=[dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps])
 
   commands = []
   for zip_file in transitive_zip_files.to_list():
@@ -294,7 +288,7 @@ A list of labels, additional source files to include in the resulting zip file.
 """,
     ),
     "deps": attr.label_list(
-        providers=["transitive_zip_files"],
+        providers=[DefaultInfo],
         doc = """
 A list of Bazel targets, other platformio_library targets that this one depends on.
 """,
@@ -414,7 +408,7 @@ options.
 """,
       ),
       "deps": attr.label_list(
-        providers=["transitive_zip_files"],
+        providers=[DefaultInfo],
         doc = """
 A list of Bazel targets, the platformio_library targets that this one
 depends on.

@@ -3,3 +3,6 @@
 
 # Ignore vim swap files.
 *.swp
+
+# Ignore VSCode files
+.vscode
