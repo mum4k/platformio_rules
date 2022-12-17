@@ -1,4 +1,4 @@
-load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
+load("@io_bazel_stardoc//stardoc:stardoc.bzl", "stardoc")
 
 stardoc(
     name = "platformio_docs",

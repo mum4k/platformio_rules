@@ -1,6 +1,13 @@
 <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 
-<a name="#platformio_library"></a>
+PlatformIO Rules.
+
+These are Bazel Starlark rules for building and uploading
+[Arduino](https://www.arduino.cc/) programs using the
+[PlatformIO](http://platformio.org/) build system.
+
+
+<a id="platformio_library"></a>
 
 ## platformio_library
 
@@ -42,7 +49,7 @@ will be set when the library is built by the PlatformIO build system.
 
 ```
 #ifdef PLATFORMIO_BUILD
-#include <My_lib.h>  // This is how PlatformIO sees and includes the library.
+#include &lt;My_lib.h&gt;  // This is how PlatformIO sees and includes the library.
 #else
 #include "actual/path/to/my_lib.h" // This is for native C++.
 #endif
@@ -52,73 +59,20 @@ Outputs a single zip file containing the C++ library in the directory structure
 expected by PlatformIO.
 
 
-### Attributes
-
-<table class="params-table">
-  <colgroup>
-    <col class="col-param" />
-    <col class="col-description" />
-  </colgroup>
-  <tbody>
-    <tr id="platformio_library-name">
-      <td><code>name</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#name">Name</a>; required
-        <p>
-          A unique name for this target.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_library-add_hdrs">
-      <td><code>add_hdrs</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a>; optional
-        <p>
-          A list of labels, additional header files to include in the resulting zip file.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_library-add_srcs">
-      <td><code>add_srcs</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a>; optional
-        <p>
-          A list of labels, additional source files to include in the resulting zip file.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_library-deps">
-      <td><code>deps</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a>; optional
-        <p>
-          A list of Bazel targets, other platformio_library targets that this one depends on.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_library-hdr">
-      <td><code>hdr</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">Label</a>; required
-        <p>
-          A string, the name of the C++ header file. This is mandatory.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_library-src">
-      <td><code>src</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">Label</a>; optional
-        <p>
-          A string, the name of the C++ source file. This is optional.
-        </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
+**ATTRIBUTES**
 
 
-<a name="#platformio_project"></a>
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="platformio_library-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="platformio_library-add_hdrs"></a>add_hdrs |  A list of labels, additional header files to include in the resulting zip file.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional | <code>[]</code> |
+| <a id="platformio_library-add_srcs"></a>add_srcs |  A list of labels, additional source files to include in the resulting zip file.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional | <code>[]</code> |
+| <a id="platformio_library-deps"></a>deps |  A list of Bazel targets, other platformio_library targets that this one depends on.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional | <code>[]</code> |
+| <a id="platformio_library-hdr"></a>hdr |  A string, the name of the C++ header file. This is mandatory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="platformio_library-src"></a>src |  A string, the name of the C++ source file. This is optional.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
+
+
+<a id="platformio_project"></a>
 
 ## platformio_project
 
@@ -148,106 +102,18 @@ the firmware_hex is the firmware in the hexadecimal format ready for
 uploading.
 
 
-### Attributes
+**ATTRIBUTES**
 
-<table class="params-table">
-  <colgroup>
-    <col class="col-param" />
-    <col class="col-description" />
-  </colgroup>
-  <tbody>
-    <tr id="platformio_project-name">
-      <td><code>name</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#name">Name</a>; required
-        <p>
-          A unique name for this target.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-board">
-      <td><code>board</code></td>
-      <td>
-        String; required
-        <p>
-          A string, name of the Arduino board to build this project for. You can
-find the supported boards in the
-[PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is
-mandatory.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-build_flags">
-      <td><code>build_flags</code></td>
-      <td>
-        List of strings; optional
-        <p>
-          A list of strings, any provided strings will directly appear in the
-generated platformio.ini file in the build_flags option for the selected
-env:board section. Refer to the [Project Configuration File manual](
-http://docs.platformio.org/en/latest/projectconf.html) for the available
-options.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-deps">
-      <td><code>deps</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a>; optional
-        <p>
-          A list of Bazel targets, the platformio_library targets that this one
-depends on.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-environment_kwargs">
-      <td><code>environment_kwargs</code></td>
-      <td>
-        <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a>; optional
-        <p>
-          A dictionary of strings to strings, any provided keys and
-values will directly appear in the generated platformio.ini file under the
-env:board section. Refer to the [Project Configuration File manual](
-http://docs.platformio.org/en/latest/projectconf.html) for the available
-options.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-framework">
-      <td><code>framework</code></td>
-      <td>
-        String; optional
-        <p>
-          A string, the name of the
-[framework](
-http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for
-this project.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-platform">
-      <td><code>platform</code></td>
-      <td>
-        String; optional
-        <p>
-          A string, the name of the
-[development platform](
-http://docs.platformio.org/en/latest/platforms/index.html#platforms) for
-this project.
-        </p>
-      </td>
-    </tr>
-    <tr id="platformio_project-src">
-      <td><code>src</code></td>
-      <td>
-        <a href="https://bazel.build/docs/build-ref.html#labels">Label</a>; required
-        <p>
-          A string, the name of the C++ source file, the main file for 
-the project that contains the Arduino setup() and loop() functions. This is mandatory.
-        </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="platformio_project-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="platformio_project-board"></a>board |  A string, name of the Arduino board to build this project for. You can find the supported boards in the [PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is mandatory.   | String | required |  |
+| <a id="platformio_project-build_flags"></a>build_flags |  A list of strings, any provided strings will directly appear in the generated platformio.ini file in the build_flags option for the selected env:board section. Refer to the [Project Configuration File manual]( http://docs.platformio.org/en/latest/projectconf.html) for the available options.   | List of strings | optional | <code>[]</code> |
+| <a id="platformio_project-deps"></a>deps |  A list of Bazel targets, the platformio_library targets that this one depends on.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional | <code>[]</code> |
+| <a id="platformio_project-environment_kwargs"></a>environment_kwargs |  A dictionary of strings to strings, any provided keys and values will directly appear in the generated platformio.ini file under the env:board section. Refer to the [Project Configuration File manual]( http://docs.platformio.org/en/latest/projectconf.html) for the available options.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional | <code>{}</code> |
+| <a id="platformio_project-framework"></a>framework |  A string, the name of the [framework]( http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for this project.   | String | optional | <code>"arduino"</code> |
+| <a id="platformio_project-platform"></a>platform |  A string, the name of the [development platform]( http://docs.platformio.org/en/latest/platforms/index.html#platforms) for this project.   | String | optional | <code>"atmelavr"</code> |
+| <a id="platformio_project-src"></a>src |  A string, the name of the C++ source file, the main file for  the project that contains the Arduino setup() and loop() functions. This is mandatory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 
 

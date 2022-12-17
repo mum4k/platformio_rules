@@ -2,55 +2,32 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "com_google_googletest",
-    urls = ["https://github.com/google/googletest/archive/release-1.8.1.zip"],
-    strip_prefix = "googletest-release-1.8.1",
-    sha256 = "927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7",
+    urls = ["https://github.com/google/googletest/archive/release-1.12.1.zip"],
+    strip_prefix = "googletest-release-1.12.1",
+    sha256 = "24564e3b712d3eb30ac9a85d92f7d720f60cc0173730ac166f27dda7fed76cb2",
 )
 
-# Skydoc, documentation generator for custom Bazel rules.
+# Stardoc, documentation generator for custom Bazel rules.
 http_archive(
     name = "io_bazel_rules_sass",
-    url = "https://github.com/bazelbuild/rules_sass/archive/1.17.2.zip",
-    strip_prefix = "rules_sass-1.17.2",
-    sha256 = "e5316ee8a09d1cbb732d3938b400836bf94dba91a27476e9e27706c4c0edae1f",
+    url = "https://github.com/bazelbuild/rules_sass/archive/1.57.0.zip",
+    strip_prefix = "rules_sass-1.57.0",
+    sha256 = "05db38271919d3d209a9f58db412a5bf2af2def7d4c1fae17b401dccbad97178",
 )
-
-# Fetch required transitive dependencies. This is an optional step because you
-# can always fetch the required NodeJS transitive dependency on your own.
-load("@io_bazel_rules_sass//:package.bzl", "rules_sass_dependencies")
-rules_sass_dependencies()
-
-# Setup repositories which are needed for the Sass rules.
-load("@io_bazel_rules_sass//:defs.bzl", "sass_repositories")
-sass_repositories()
-
-# Setup the NodeJS toolchain
-load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories")
-node_repositories()
 
 http_archive(
     name = "io_bazel_skylib",
-    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/0.7.0.zip"],
-    sha256 = "bce240a0749dfc52fab20dce400b4d5cf7c28b239d64f8fd1762b3c9470121d8",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/1.3.0.zip"],
+    sha256 = "4756ab3ec46d94d99e5ed685d2d24aece484015e45af303eb3a11cab3cdc2e71",
 )
-
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "io_bazel_skydoc",
-    remote = "https://github.com/bazelbuild/skydoc.git",
-    tag = "0.3.0",
+    name = "io_bazel_stardoc",
+    remote = "https://github.com/bazelbuild/stardoc.git",
+    tag = "0.5.3",
 )
 
-load("@io_bazel_skydoc//:setup.bzl", "skydoc_repositories")
-skydoc_repositories()
-
-load("@io_bazel_rules_sass//:package.bzl", "rules_sass_dependencies")
-rules_sass_dependencies()
-
-load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories")
-node_repositories()
-
-load("@io_bazel_rules_sass//:defs.bzl", "sass_repositories")
-sass_repositories()
+load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
+stardoc_repositories()

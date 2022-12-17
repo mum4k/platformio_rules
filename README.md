@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/mum4k/platformio_rules.svg?branch=master)](https://travis-ci.com/mum4k/platformio_rules)
 
-These are Bazel Skylark rules for building and uploading
+These are Bazel Starlark rules for building and uploading
 [Arduino](https://www.arduino.cc/) programs using the
 [PlatformIO](http://platformio.org/) build system.
 
@@ -50,7 +50,7 @@ git_repository(
 
 ### Load the rule definitions in the BUILD file
 
-To load the Skylark definitions in your BUILD file add the following at the top
+To load the Starlark definitions in your BUILD file add the following at the top
 of the BUILD file.
 
 ```
@@ -72,7 +72,7 @@ See the [generated documentation](docs/platformio_doc.md).
 
 ## Rules documentation
 
-These rules have standard Skylark documentation inside the platformio_docs
+These rules have standard Starlark documentation inside the platformio_docs
 directory.
 
 To rebuild the documentation run:
