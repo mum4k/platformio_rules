@@ -15,7 +15,7 @@
 
 """PlatformIO Rules.
 
-These are Bazel Skylark rules for building and uploading
+These are Bazel Starlark rules for building and uploading
 [Arduino](https://www.arduino.cc/) programs using the
 [PlatformIO](http://platformio.org/) build system.
 """
@@ -69,7 +69,7 @@ def _platformio_library_impl(ctx):
   by PlatformIO.
 
   Args:
-    ctx: The Skylark context.
+    ctx: The Starlark context.
   """
   name = ctx.label.name
 
@@ -135,7 +135,7 @@ def _emit_ini_file_action(ctx):
   """Emits a Bazel action that generates the PlatformIO configuration file.
 
   Args:
-    ctx: The Skylark context.
+    ctx: The Starlark context.
   """
   environment_kwargs = []
   if ctx.attr.environment_kwargs:
@@ -168,7 +168,7 @@ def _emit_main_file_action(ctx):
   """Emits a Bazel action that outputs the project main C++ file.
 
   Args:
-    ctx: The Skylark context.
+    ctx: The Starlark context.
   """
   ctx.actions.run_shell(
       inputs=[ctx.file.src],
@@ -182,7 +182,7 @@ def _emit_build_action(ctx, project_dir):
   """Emits a Bazel action that unzips the libraries and builds the project.
 
   Args:
-    ctx: The Skylark context.
+    ctx: The Starlark context.
     project_dir: A string, the main directory of the PlatformIO project.
       This is where the zip files will be extracted.
   """
@@ -230,7 +230,7 @@ def _emit_executable_action(ctx):
   Arduino device.
 
   Args:
-    ctx: The Skylark context.
+    ctx: The Starlark context.
   """
   # TODO(mum4k): Make this script smarter, when executed via Bazel, the current
   # directory is project_name.runfiles/__main__ so we need to go two dirs up.
@@ -252,7 +252,7 @@ def _platformio_project_impl(ctx):
   is the compiled version of the Arduino firmware for the specified board.
 
   Args:
-    ctx: The Skylark context.
+    ctx: The Starlark context.
   """
   _emit_ini_file_action(ctx)
   _emit_main_file_action(ctx)
