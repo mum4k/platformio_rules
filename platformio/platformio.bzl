@@ -150,16 +150,22 @@ def _emit_ini_file_action(ctx):
       if flag == "":
           continue
       build_flags.append(flag)
-  ctx.actions.expand_template(
-      template=ctx.file._platformio_ini_tmpl,
-      output=ctx.outputs.platformio_ini,
-      substitutions={
-          "%board%": ctx.attr.board,
-          "%platform%": ctx.attr.platform,
-          "%framework%": ctx.attr.framework,
-          "%environment_kwargs%": "\n".join(environment_kwargs),
-          "%build_flags%": " ".join(build_flags),
-      },
+  substitutions = struct(
+    board=ctx.attr.board,
+    platform=ctx.attr.platform,
+    framework=ctx.attr.framework,
+    environment_kwargs=environment_kwargs,
+    build_flags=build_flags,
+  ).to_json()
+  ctx.actions.run(
+    outputs=[ctx.outputs.platformio_ini],
+    inputs=[ctx.file._platformio_ini_tmpl],
+    executable=ctx.executable._template_renderer,
+    arguments=[
+      ctx.file._platformio_ini_tmpl.path,
+      ctx.outputs.platformio_ini.path,
+      substitutions
+    ],
   )
 
 
@@ -355,6 +361,11 @@ platformio_project = rule(
       "_platformio_ini_tmpl": attr.label(
         default=Label("//platformio:platformio_ini_tmpl"),
         allow_single_file=True,
+      ),
+      "_template_renderer": attr.label(
+        default=Label("//platformio:template_renderer"),
+        executable=True,
+        cfg="exec",
       ),
       "src": attr.label(
         allow_single_file=[".cc"],
