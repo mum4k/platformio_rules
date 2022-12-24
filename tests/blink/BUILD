@@ -7,6 +7,7 @@ platformio_project(
     framework = "arduino",
     platform = "atmelavr",
     build_flags = ["-D TARGET_PIN=4"],
-    programmer = "arduino_as_isp"
+    programmer = "arduino_as_isp",
+    port = "/dev/ttyUSB0",
 )
 
