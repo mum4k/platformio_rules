@@ -10,11 +10,15 @@ default_envs = {{ board }}
 [env:{{ board }}]
 build_flags =
   -Wall
-  -DPLATFORMIO_BUILD{% for flag in build_flags %}
-  {{ flag }}{% endfor %}
+  -DPLATFORMIO_BUILD
+{%- for flag in build_flags %}
+  {{ flag }}
+{%- endfor %}
 lib_ldf_mode = deep+
 platform = {{ platform }}
 board = {{ board }}
 framework = 
-  {{ framework }}{% for kwarg in environment_kwargs%}
-  {{environment_kwargs}}{% endfor %}
+  {{ framework }}
+{%- for kwarg in environment_kwargs %}
+  {{environment_kwargs}}
+{%- endfor %}
