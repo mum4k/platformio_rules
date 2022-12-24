@@ -178,6 +178,8 @@ def _emit_ini_file_action(ctx, output_files):
     framework=ctx.attr.framework,
     environment_kwargs=environment_kwargs,
     build_flags=build_flags,
+    programmer=ctx.attr.programmer,
+    port=ctx.attr.port,
   ).to_json()
   ctx.actions.run(
     outputs=[output_files.platformio_ini],
@@ -431,6 +433,12 @@ find the supported boards in the
 mandatory.
 """,
       ),
+      "port": attr.string(
+        doc = """
+Port where your microcontroller is connected. This field is mandatory if you
+are using arduino_as_isp as your programmer.
+""",
+      )
       "platform": attr.string(
         default="atmelavr",
         doc = """
@@ -467,6 +475,21 @@ generated platformio.ini file in the build_flags option for the selected
 env:board section. Refer to the [Project Configuration File manual](
 http://docs.platformio.org/en/latest/projectconf.html) for the available
 options.
+""",
+      ),
+      "programmer": attr.string(
+        default = "direct",
+        values = [
+          "arduino_as_isp",
+          "direct",
+        ],
+        doc = """
+Type of programmer to use:
+- direct: Use the USB connection in the microcontroller deveopment board to
+program it
+- arduino_as_isp: Use an arduino programmed with the Arduino as ISP code to
+in-circuit program another microcontroller (see
+https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details).
 """,
       ),
       "deps": attr.label_list(
