@@ -28,11 +28,6 @@ The first three ar usually available on any linux system. The platformio
 command is added by [installing
 PlatformIO](http://docs.platformio.org/en/latest/installation.html).
 
-You also need to have Jinja2 installed as a Python module, which you can install with
-```
-pip install Jinja2
-```
-
 ## Setup
 
 In order to use these Bazel rules, you must add this git repository to your
