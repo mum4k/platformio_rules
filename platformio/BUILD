@@ -1,3 +1,6 @@
+load("@py_deps//:requirements.bzl", "requirement")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -5,6 +8,9 @@ package(
 py_binary(
     name = "template_renderer",
     srcs = ["template_renderer.py"],
+    deps = [
+        requirement("jinja2"),
+    ]
 )
 
 filegroup(

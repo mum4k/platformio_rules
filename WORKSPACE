@@ -31,3 +31,27 @@ git_repository(
 
 load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
 stardoc_repositories()
+
+# Python library manager (pip)
+http_archive(
+    name = "rules_python",
+    sha256 = "81cbfc16dd1c022c4761267fa8b2feb881aaea9c3e1143f2e64630a1ad18c347",
+    strip_prefix = "rules_python-0.16.1",
+    url = "https://github.com/bazelbuild/rules_python/archive/0.16.1.zip",
+)
+load("@rules_python//python:repositories.bzl", "python_register_toolchains")
+python_register_toolchains(
+    name = "python3_10_8",
+    # Available versions are listed in @rules_python//python:versions.bzl.
+    # We recommend using the same version your team is already standardized on.
+    python_version = "3.10.8",
+)
+load("@python3_10_8//:defs.bzl", "interpreter")
+load("@rules_python//python:pip.bzl", "pip_parse")
+pip_parse(
+    name = "py_deps",
+    python_interpreter_target = interpreter,
+    requirements_lock = "//:requirements_lock.txt",
+)
+load("@py_deps//:requirements.bzl", "install_deps")
+install_deps()

@@ -17,7 +17,6 @@ template_file.close()
 # Render template
 template = jinja2.Environment().from_string(template_str)
 rendered_str = template.render(substitutions)
-print(rendered_str)
 
 # Write output to desired file
 output_file = open(output_filename, "w")
