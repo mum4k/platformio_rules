@@ -32,15 +32,34 @@ using binary_counter::kDefaultTimeoutMs;
 using binary_counter::LedDisplay;
 using binary_counter::LedPins;
 
+#ifndef RED_LED_PIN
+#error RED_LED_PIN needs to be defined
+#endif
+#ifndef ORANGE_LED_PIN
+#error ORANGE_LED_PIN needs to be defined
+#endif
+#ifndef GREEN_LED_PIN
+#error GREEN_LED_PIN needs to be defined
+#endif
+#ifndef BLUE_LED_PIN
+#error BLUE_LED_PIN needs to be defined
+#endif
+#ifndef YELLOW_LED_PIN
+#error YELLOW_LED_PIN needs to be defined
+#endif
+#ifndef BUTTON_PIN
+#error BUTTON_PIN needs to be defined
+#endif
+
 // Arduino hardware layer.
 const ArduinoImpl ino = ArduinoImpl();
 
 // Pin numbers where the Leds are wired.
-const int kRedLedPin = 44;
-const int kOrangeLedPin = 46;
-const int kGreenLedPin = 48;
-const int kBlueLedPin = 50;
-const int kYellowLedPin = 52;
+const int kRedLedPin = RED_LED_PIN;
+const int kOrangeLedPin = ORANGE_LED_PIN;
+const int kGreenLedPin = GREEN_LED_PIN;
+const int kBlueLedPin = BLUE_LED_PIN;
+const int kYellowLedPin = YELLOW_LED_PIN;
 const LedPins led_pins(kYellowLedPin, kBlueLedPin, kGreenLedPin, kOrangeLedPin,
                        kRedLedPin);
 
@@ -48,7 +67,7 @@ const LedPins led_pins(kYellowLedPin, kBlueLedPin, kGreenLedPin, kOrangeLedPin,
 const LedDisplay led = LedDisplay(ino, led_pins);
 
 // Pin where the button is wired.
-const int kButtonPin = 2;
+const int kButtonPin = BUTTON_PIN;
 
 // Remains in the intro mode until this gets set to false.
 volatile bool intro = true;
