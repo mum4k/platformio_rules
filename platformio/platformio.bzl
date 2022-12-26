@@ -139,9 +139,10 @@ def _declare_outputs(ctx):
   Returns:
     List of output files declared by ctx.actions.declare_file().
   """
-  main_cpp = ctx.actions.declare_file("src/%s_main.cpp" % ctx.attr.name)
-  platformio_ini = ctx.actions.declare_file("platformio.ini")
-  firmware_elf = ctx.actions.declare_file(".pio/build/%s/firmware.elf" % ctx.attr.board)
+  dirname = "%s_workdir" % ctx.attr.name
+  platformio_ini = ctx.actions.declare_file("%s/platformio.ini" % dirname)
+  main_cpp = ctx.actions.declare_file("%s/src/main.cpp" % dirname)
+  firmware_elf = ctx.actions.declare_file("%s/.pio/build/%s/firmware.elf" %  (dirname, ctx.attr.board))
   return struct(
     main_cpp=main_cpp,
     platformio_ini=platformio_ini,
@@ -288,6 +289,11 @@ def _platformio_project_impl(ctx):
   project_dir = output_files.platformio_ini.dirname
   _emit_build_action(ctx, project_dir, output_files)
   _emit_executable_action(ctx)
+  return [DefaultInfo(files = depset([
+    output_files.main_cpp,
+    output_files.platformio_ini,
+    output_files.firmware_elf,
+  ]))]
 
 
 platformio_library = rule(
