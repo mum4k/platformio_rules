@@ -438,7 +438,7 @@ mandatory.
 Port where your microcontroller is connected. This field is mandatory if you
 are using arduino_as_isp as your programmer.
 """,
-      )
+      ),
       "platform": attr.string(
         default="atmelavr",
         doc = """
