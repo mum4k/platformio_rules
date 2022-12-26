@@ -36,7 +36,7 @@ configs = [
             "-DGREEN_LED_PIN=5",
             "-DBLUE_LED_PIN=6",
             "-DYELLOW_LED_PIN=7",
-            "-DBUTTON_PIN=8",
+            "-DBUTTON_PIN=2",
         ],
     ),
 ]
