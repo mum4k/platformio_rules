@@ -39,12 +39,14 @@ _COPY_COMMAND="cp {source} {destination}"
 
 
 # Command that zips files recursively. It enters the output directory first so
-# that the zipped path starts at lib/.
-_ZIP_COMMAND="cd {output_dir} && zip -qq -r -u {zip_filename} lib/"
+# that the zipped path starts at lib/. It will return to the original directory
+# when finishing the command.
+_ZIP_COMMAND="cd {output_dir} && zip -qq -r -u {zip_filename} lib/; cd -"
 
 
-# Command that unzips a zip archive into the specified directory.
-_UNZIP_COMMAND="unzip -qq -o -d {project_dir} {zip_filename}"
+# Command that unzips a zip archive into the specified directory. It will create
+# the destination directory if it doesn't exist.
+_UNZIP_COMMAND="mkdir -p {project_dir} && unzip -qq -o -d {project_dir} {zip_filename}"
 
 
 # Command that executes the PlatformIO build system and builds the project in
@@ -130,11 +132,31 @@ def _platformio_library_impl(ctx):
   )
 
 
-def _emit_ini_file_action(ctx):
+def _declare_outputs(ctx):
+  """Declares the output files needed by the platformio_project rule.
+
+  Args:
+    ctx: The Starlark context.
+
+  Returns:
+    List of output files declared by ctx.actions.declare_file().
+  """
+  dirname = "%s_workdir" % ctx.attr.name
+  platformio_ini = ctx.actions.declare_file("%s/platformio.ini" % dirname)
+  main_cpp = ctx.actions.declare_file("%s/src/main.cpp" % dirname)
+  firmware_elf = ctx.actions.declare_file("%s/.pio/build/%s/firmware.elf" %  (dirname, ctx.attr.board))
+  return struct(
+    main_cpp=main_cpp,
+    platformio_ini=platformio_ini,
+    firmware_elf=firmware_elf)
+
+
+def _emit_ini_file_action(ctx, output_files):
   """Emits a Bazel action that generates the PlatformIO configuration file.
 
   Args:
     ctx: The Starlark context.
+    output_files: List of output files declared by ctx.actions.declare_file().
   """
   environment_kwargs = []
   if ctx.attr.environment_kwargs:
@@ -158,38 +180,40 @@ def _emit_ini_file_action(ctx):
     build_flags=build_flags,
   ).to_json()
   ctx.actions.run(
-    outputs=[ctx.outputs.platformio_ini],
+    outputs=[output_files.platformio_ini],
     inputs=[ctx.file._platformio_ini_tmpl],
     executable=ctx.executable._template_renderer,
     arguments=[
       ctx.file._platformio_ini_tmpl.path,
-      ctx.outputs.platformio_ini.path,
+      output_files.platformio_ini.path,
       substitutions
     ],
   )
 
 
-def _emit_main_file_action(ctx):
+def _emit_main_file_action(ctx, output_files):
   """Emits a Bazel action that outputs the project main C++ file.
 
   Args:
     ctx: The Starlark context.
+    output_files: List of output files declared by ctx.actions.declare_file().
   """
   ctx.actions.run_shell(
       inputs=[ctx.file.src],
-      outputs=[ctx.outputs.main_cpp],
+      outputs=[output_files.main_cpp],
       command=_COPY_COMMAND.format(
-          source=ctx.file.src.path, destination=ctx.outputs.main_cpp.path),
+          source=ctx.file.src.path, destination=output_files.main_cpp.path),
   )
 
 
-def _emit_build_action(ctx, project_dir):
+def _emit_build_action(ctx, project_dir, output_files):
   """Emits a Bazel action that unzips the libraries and builds the project.
 
   Args:
     ctx: The Starlark context.
     project_dir: A string, the main directory of the PlatformIO project.
       This is where the zip files will be extracted.
+    output_files: List of output files declared by ctx.actions.declare_file().
   """
   transitive_zip_files=depset(
     transitive=[
@@ -204,12 +228,12 @@ def _emit_build_action(ctx, project_dir):
 
   # The PlatformIO build system needs the project configuration file, the main
   # file and all the transitive dependancies.
-  inputs=[ctx.outputs.platformio_ini, ctx.outputs.main_cpp]
+  inputs=[output_files.platformio_ini, output_files.main_cpp]
   for zip_file in transitive_zip_files.to_list():
     inputs.append(zip_file)
   ctx.actions.run_shell(
       inputs=inputs,
-      outputs=[ctx.outputs.firmware_elf],
+      outputs=[output_files.firmware_elf],
       command="\n".join(commands),
       env={
         # The PlatformIO binary assumes that the build tools are in the path.
@@ -227,7 +251,7 @@ def _emit_build_action(ctx, project_dir):
   )
 
 
-def _emit_executable_action(ctx):
+def _emit_executable_action(ctx, project_dir):
   """Emits a Bazel action that produces executable script.
 
   When the script is executed, the compiled firmware gets uploaded to the
@@ -235,14 +259,25 @@ def _emit_executable_action(ctx):
 
   Args:
     ctx: The Starlark context.
+    project_dir: A string, the main directory of the PlatformIO project.
+      This is where the zip files will be extracted.
   """
   # TODO(mum4k): Make this script smarter, when executed via Bazel, the current
   # directory is project_name.runfiles/__main__ so we need to go two dirs up.
   # This however won't work when executed directly.
-  content=[_SHELL_HEADER, _UPLOAD_COMMAND.format(project_dir="../..")]
+  transitive_zip_files=depset(
+    transitive=[
+      dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps
+  ])
+
+  commands = [_SHELL_HEADER]
+  for zip_file in transitive_zip_files.to_list():
+    commands.append(_UNZIP_COMMAND.format(
+        project_dir=project_dir, zip_filename=zip_file.short_path))
+  commands.append(_UPLOAD_COMMAND.format(project_dir=project_dir))
   ctx.actions.write(
       output=ctx.outputs.executable,
-      content="\n".join(content),
+      content="\n".join(commands),
       is_executable=True,
   )
 
@@ -258,14 +293,31 @@ def _platformio_project_impl(ctx):
   Args:
     ctx: The Starlark context.
   """
-  _emit_ini_file_action(ctx)
-  _emit_main_file_action(ctx)
+  output_files = _declare_outputs(ctx)
+  _emit_ini_file_action(ctx, output_files)
+  _emit_main_file_action(ctx, output_files)
 
   # Determine the build directory used by Bazel, that is the directory where
   # our output files will be placed.
-  project_dir = ctx.outputs.platformio_ini.dirname
-  _emit_build_action(ctx, project_dir)
-  _emit_executable_action(ctx)
+  project_build_dir = output_files.platformio_ini.dirname
+  _emit_build_action(ctx, project_build_dir, output_files)
+  # Determine the run directory used by Bazel, that is the directory where our
+  # output files will be placed.
+  project_run_dir = "./%s" % project_build_dir[len(output_files.platformio_ini.root.path)+1:]
+  _emit_executable_action(ctx, project_run_dir)
+
+  return DefaultInfo(
+    default_runfiles=ctx.runfiles(files=[
+      ctx.outputs.executable,
+      output_files.main_cpp,
+      output_files.platformio_ini,
+      output_files.firmware_elf,
+    ] + depset(
+      transitive=[
+        dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps
+      ]).to_list()
+    )
+  )
 
 
 platformio_library = rule(
@@ -352,11 +404,6 @@ expected by PlatformIO.
 platformio_project = rule(
     implementation=_platformio_project_impl,
     executable=True,
-    outputs = {
-      "main_cpp": "src/main.cpp",
-      "platformio_ini": "platformio.ini",
-      "firmware_elf": ".pio/build/%{board}/firmware.elf",
-    },
     attrs={
       "_platformio_ini_tmpl": attr.label(
         default=Label("//platformio:platformio_ini_tmpl"),

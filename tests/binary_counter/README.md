@@ -31,9 +31,14 @@ count will be displayed in binary form using the Leds.
 
 ### The breadboard
 
-![The binary counter breadboard](doc/binary_counter_bb.png)
-
-### Fritzing circuit
+#### On Arduino Mega
+![The binary counter breadboard](doc/binary_counter_mega_bb.png)
 
 The [Fritzing](http://fritzing.org) circuit is stored in file
-[binary_counter.fzz](doc/binary_counter.fzz).
+[binary_counter.fzz](doc/binary_counter_mega.fzz).
+
+#### On Arduino Nano
+![The binary counter breadboard](doc/binary_counter_nano_bb.png)
+
+The [Fritzing](http://fritzing.org) circuit is stored in file
+[binary_counter.fzz](doc/binary_counter_nano.fzz).
