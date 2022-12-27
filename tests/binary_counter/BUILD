@@ -15,10 +15,10 @@
 load("//platformio:platformio.bzl", "platformio_project")
 
 configs = [
-    (
-        "mega",
-        "megaatmega2560",
-        [
+    {
+        "name": "mega",
+        "board": "megaatmega2560",
+        "build_flags": [
             "-DRED_LED_PIN=44",
             "-DORANGE_LED_PIN=46",
             "-DGREEN_LED_PIN=48",
@@ -26,11 +26,11 @@ configs = [
             "-DYELLOW_LED_PIN=52",
             "-DBUTTON_PIN=2",
         ],
-    ),
-    (
-        "nano",
-        "nanoatmega328",
-        [
+    },
+    {
+        "name": "nano",
+        "board": "nanoatmega328",
+        "build_flags": [
             "-DRED_LED_PIN=3",
             "-DORANGE_LED_PIN=4",
             "-DGREEN_LED_PIN=5",
@@ -38,16 +38,16 @@ configs = [
             "-DYELLOW_LED_PIN=7",
             "-DBUTTON_PIN=2",
         ],
-    ),
+    },
 ]
 
 [platformio_project(
-    name = "binary_counter_%s" % config[0],
+    name = "binary_counter_%s" % config["name"],
     src = "binary_counter.cc",
-    board = config[1],
+    board = config["board"],
     framework = "arduino",
     platform = "atmelavr",
-    build_flags = config[2],
+    build_flags = config["build_flags"],
     deps = [
         "//tests/arduino:Arduino_impl",
         "//tests/arduino:Arduino_interface",
