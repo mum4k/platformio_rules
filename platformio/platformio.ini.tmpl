@@ -22,3 +22,20 @@ framework =
 {%- for kwarg in environment_kwargs %}
   {{environment_kwargs}}
 {%- endfor %}
+{%- if programmer == "arduino_as_isp" %}
+upload_protocol = custom
+upload_port = {{ port }}
+upload_speed = 19200
+upload_flags =
+    -C
+    ${platformio.packages_dir}/tool-avrdude/avrdude.conf
+    -p
+    $BOARD_MCU
+    -P
+    $UPLOAD_PORT
+    -b
+    $UPLOAD_SPEED
+    -c
+    stk500v1
+upload_command = avrdude $UPLOAD_FLAGS -U flash:w:$SOURCE:i
+{% endif %}
