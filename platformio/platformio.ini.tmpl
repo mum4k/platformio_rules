@@ -7,6 +7,13 @@ If you are working on the template, knock yourself out ;) #}
 [platformio]
 default_envs = {{ board }}
 
+{%- if programmer == "usbtinyisp" %}
+[env:myenv]
+platform = atmelavr
+framework = arduino
+upload_protocol = usbtiny
+
+{%- endif %}
 [env:{{ board }}]
 build_flags =
   -Wall
@@ -38,4 +45,16 @@ upload_flags =
     -c
     stk500v1
 upload_command = avrdude $UPLOAD_FLAGS -U flash:w:$SOURCE:i
-{% endif %}
+{%- endif %}
+{%- if programmer == "usbtinyisp" %}
+upload_protocol = custom
+upload_flags =
+    -C
+    ; use "tool-avrdude-megaavr" for the atmelmegaavr platform
+    ${platformio.packages_dir}/tool-avrdude/avrdude.conf
+    -p
+    $BOARD_MCU
+    -c
+    usbtiny
+upload_command = avrdude $UPLOAD_FLAGS -U flash:w:$SOURCE:i
+{%- endif %}
