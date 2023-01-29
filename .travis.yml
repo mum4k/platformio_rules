@@ -11,7 +11,7 @@ addons:
     packages:
       - pkg-config
       - python
-      - python-pip
+      - python3-pip
       - unzip
       - wget
       - zip
