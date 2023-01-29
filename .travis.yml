@@ -20,7 +20,7 @@ before_install:
   - wget https://github.com/bazelbuild/bazel/releases/download/0.27.2/bazel_0.27.2-linux-x86_64.deb
   - sha256sum -c bazel/bazel_0.27.2-linux-x86_64.deb.sha256
   - sudo dpkg --force-all -i bazel_0.27.2-linux-x86_64.deb
-  - sudo /usr/bin/pip install platformio
+  - sudo /usr/bin/pip install --index-url=https://pypi.python.org/simple/ platformio
 
 script:
   - bazel build //...
