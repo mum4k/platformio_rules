@@ -482,6 +482,7 @@ options.
         values = [
           "arduino_as_isp",
           "direct",
+          "usbtinyisp",
         ],
         doc = """
 Type of programmer to use:
@@ -490,6 +491,8 @@ program it
 - arduino_as_isp: Use an arduino programmed with the Arduino as ISP code to
 in-circuit program another microcontroller (see
 https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details).
+- usbtinyisp: Use an USBTinyISP programmer, like
+https://www.amazon.com/gp/product/B09DG384MK
 """,
       ),
       "deps": attr.label_list(
