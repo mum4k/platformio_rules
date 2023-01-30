@@ -1,4 +1,4 @@
-dist: trusty
+dist: focal
 
 notifications:
   email:
@@ -11,15 +11,16 @@ addons:
     packages:
       - pkg-config
       - python
-      - python-pip
+      - python3-pip
       - unzip
       - wget
       - zip
 
 before_install:
-  - wget https://github.com/bazelbuild/bazel/releases/download/0.27.2/bazel_0.27.2-linux-x86_64.deb
-  - sha256sum -c bazel/bazel_0.27.2-linux-x86_64.deb.sha256
-  - sudo dpkg --force-all -i bazel_0.27.2-linux-x86_64.deb
+  - wget https://github.com/bazelbuild/bazel/releases/download/6.0.0/bazel_6.0.0-linux-x86_64.deb
+  - wget https://github.com/bazelbuild/bazel/releases/download/6.0.0/bazel_6.0.0-linux-x86_64.deb.sha256
+  - sha256sum -c bazel_6.0.0-linux-x86_64.deb.sha256
+  - sudo dpkg --force-all -i bazel_6.0.0-linux-x86_64.deb
   - sudo /usr/bin/pip install platformio
 
 script:
