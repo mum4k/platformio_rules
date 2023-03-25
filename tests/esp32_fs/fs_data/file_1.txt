@@ -1,0 +1,1 @@
+This file should end up in the ESP32's SPIFFS filesystem
