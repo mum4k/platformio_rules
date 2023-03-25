@@ -77,7 +77,8 @@ expected by PlatformIO.
 ## platformio_project
 
 <pre>
-platformio_project(<a href="#platformio_project-name">name</a>, <a href="#platformio_project-board">board</a>, <a href="#platformio_project-build_flags">build_flags</a>, <a href="#platformio_project-deps">deps</a>, <a href="#platformio_project-environment_kwargs">environment_kwargs</a>, <a href="#platformio_project-framework">framework</a>, <a href="#platformio_project-platform">platform</a>, <a href="#platformio_project-src">src</a>)
+platformio_project(<a href="#platformio_project-name">name</a>, <a href="#platformio_project-board">board</a>, <a href="#platformio_project-build_flags">build_flags</a>, <a href="#platformio_project-deps">deps</a>, <a href="#platformio_project-environment_kwargs">environment_kwargs</a>, <a href="#platformio_project-framework">framework</a>, <a href="#platformio_project-platform">platform</a>, <a href="#platformio_project-port">port</a>,
+                   <a href="#platformio_project-programmer">programmer</a>, <a href="#platformio_project-src">src</a>, <a href="#platformio_project-upload_fs">upload_fs</a>)
 </pre>
 
 
@@ -114,6 +115,9 @@ uploading.
 | <a id="platformio_project-environment_kwargs"></a>environment_kwargs |  A dictionary of strings to strings, any provided keys and values will directly appear in the generated platformio.ini file under the env:board section. Refer to the [Project Configuration File manual]( http://docs.platformio.org/en/latest/projectconf.html) for the available options.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional | <code>{}</code> |
 | <a id="platformio_project-framework"></a>framework |  A string, the name of the [framework]( http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for this project.   | String | optional | <code>"arduino"</code> |
 | <a id="platformio_project-platform"></a>platform |  A string, the name of the [development platform]( http://docs.platformio.org/en/latest/platforms/index.html#platforms) for this project.   | String | optional | <code>"atmelavr"</code> |
+| <a id="platformio_project-port"></a>port |  Port where your microcontroller is connected. This field is mandatory if you are using arduino_as_isp as your programmer.   | String | optional | <code>""</code> |
+| <a id="platformio_project-programmer"></a>programmer |  Type of programmer to use: - direct: Use the USB connection in the microcontroller deveopment board to program it - arduino_as_isp: Use an arduino programmed with the Arduino as ISP code to in-circuit program another microcontroller (see https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details). - usbtinyisp: Use an USBTinyISP programmer, like https://www.amazon.com/gp/product/B09DG384MK   | String | optional | <code>"direct"</code> |
 | <a id="platformio_project-src"></a>src |  A string, the name of the C++ source file, the main file for  the project that contains the Arduino setup() and loop() functions. This is mandatory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="platformio_project-upload_fs"></a>upload_fs |  Filegroup containing files to upload to the device's FS memory.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
 
 
