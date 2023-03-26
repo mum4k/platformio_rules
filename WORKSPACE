@@ -21,14 +21,14 @@ http_archive(
     sha256 = "4756ab3ec46d94d99e5ed685d2d24aece484015e45af303eb3a11cab3cdc2e71",
 )
 
-load("//:bazel/deps.bzl", "platformio_rules_dependencies")
+load("//bazel:deps.bzl", "platformio_rules_dependencies")
 platformio_rules_dependencies()
 
-load("//:bazel/transitive.bzl", "platformio_rules_transitive_dependencies")
+load("//bazel:transitive.bzl", "platformio_rules_transitive_dependencies")
 platformio_rules_transitive_dependencies()
 
-load("//:bazel/pip_parse.bzl", "pip_parse_dependencies")
-pip_parse_dependencies()
+load("//bazel:pip_parse.bzl", "platformio_rules_pip_parse_dependencies")
+platformio_rules_pip_parse_dependencies()
 
-load("//:bazel/pip_install.bzl", "pip_install_dependencies")
-pip_install_dependencies()
+load("//bazel:pip_install.bzl", "platformio_rules_pip_install_dependencies")
+platformio_rules_pip_install_dependencies()
