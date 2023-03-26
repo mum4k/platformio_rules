@@ -1,4 +1,4 @@
 load("@py_deps//:requirements.bzl", "install_deps")
 
-def platformio_rules_dependencies():
+def pip_install_dependencies():
     install_deps()
