@@ -27,8 +27,14 @@ platformio_rules_dependencies()
 load("//bazel:transitive.bzl", "platformio_rules_transitive_dependencies")
 platformio_rules_transitive_dependencies()
 
-load("//bazel:pip_parse.bzl", "platformio_rules_pip_parse_dependencies")
-platformio_rules_pip_parse_dependencies()
+load("@python3_10_8//:defs.bzl", "interpreter")
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "py_deps",
+    python_interpreter_target = interpreter,
+    requirements_lock = "//:requirements_lock.txt",
+)
 
 load("//bazel:pip_install.bzl", "platformio_rules_pip_install_dependencies")
 platformio_rules_pip_install_dependencies()
