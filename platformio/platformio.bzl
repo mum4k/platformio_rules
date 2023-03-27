@@ -34,6 +34,10 @@ _SOURCE_FILENAME = "lib/{dirname}/{filename}.cpp"
 _ADDITIONAL_FILENAME = "lib/{dirname}/{filename}"
 
 
+# Command that makes a directory
+_MAKE_DIR_COMMAND="mkdir -p {dirname}"
+
+
 # Command that copies the source to the destination.
 _COPY_COMMAND="cp {source} {destination}"
 
@@ -57,6 +61,11 @@ _BUILD_COMMAND="platformio run -s -d {project_dir}"
 # Command that executes the PlatformIO build system and uploads the compiled
 # firmware to the device.
 _UPLOAD_COMMAND="platformio run -s -d {project_dir} -t upload"
+
+
+# Command that executed the PlatformIO system to upload data files to the
+# device's FS
+_FS_UPLOAD_COMMAND="platformio run -s -d {project_dir} -t uploadfs"
 
 
 # Header used in the shell script that makes platformio_project executable.
@@ -145,10 +154,14 @@ def _declare_outputs(ctx):
   platformio_ini = ctx.actions.declare_file("%s/platformio.ini" % dirname)
   main_cpp = ctx.actions.declare_file("%s/src/main.cpp" % dirname)
   firmware_elf = ctx.actions.declare_file("%s/.pio/build/%s/firmware.elf" %  (dirname, ctx.attr.board))
+  fs_dir = None
+  if ctx.attr.upload_fs:
+    fs_dir = ctx.actions.declare_directory("%s/data/" % dirname)
   return struct(
     main_cpp=main_cpp,
     platformio_ini=platformio_ini,
-    firmware_elf=firmware_elf)
+    firmware_elf=firmware_elf,
+    fs_dir=fs_dir)
 
 
 def _emit_ini_file_action(ctx, output_files):
@@ -205,6 +218,36 @@ def _emit_main_file_action(ctx, output_files):
       outputs=[output_files.main_cpp],
       command=_COPY_COMMAND.format(
           source=ctx.file.src.path, destination=output_files.main_cpp.path),
+  )
+
+
+def _emit_upload_fs_copy_action(ctx, output_files):
+  """Emits a Bazel action that creates the folder with data to upload to the FS
+
+  Args:
+    ctx: The Starlark context.
+    output_files: List of output files declared by ctx.actions.declare_file().
+  """
+  if not output_files.fs_dir:
+    return
+  
+  commands = []
+  commands.append(
+    _MAKE_DIR_COMMAND.format(dirname=output_files.fs_dir.path))
+  fs_files = depset(transitive=[
+    ctx.attr.upload_fs[DefaultInfo].default_runfiles.files
+  ]).to_list()
+  input_files=[]
+  for file in fs_files:
+    input_files.append(file)
+    commands.append(
+      _COPY_COMMAND.format(
+        source=file.path,
+        destination=output_files.fs_dir.path))
+  ctx.actions.run_shell(
+    outputs=[output_files.fs_dir],
+    inputs=input_files,
+    command="\n".join(commands),
   )
 
 
@@ -277,10 +320,12 @@ def _emit_executable_action(ctx, project_dir):
     commands.append(_UNZIP_COMMAND.format(
         project_dir=project_dir, zip_filename=zip_file.short_path))
   commands.append(_UPLOAD_COMMAND.format(project_dir=project_dir))
+  if ctx.attr.upload_fs:
+    commands.append(_FS_UPLOAD_COMMAND.format(project_dir=project_dir))
   ctx.actions.write(
-      output=ctx.outputs.executable,
-      content="\n".join(commands),
-      is_executable=True,
+    output=ctx.outputs.executable,
+    content="\n".join(commands),
+    is_executable=True,
   )
 
 
@@ -298,6 +343,7 @@ def _platformio_project_impl(ctx):
   output_files = _declare_outputs(ctx)
   _emit_ini_file_action(ctx, output_files)
   _emit_main_file_action(ctx, output_files)
+  _emit_upload_fs_copy_action(ctx, output_files)
 
   # Determine the build directory used by Bazel, that is the directory where
   # our output files will be placed.
@@ -308,8 +354,7 @@ def _platformio_project_impl(ctx):
   project_run_dir = "./%s" % project_build_dir[len(output_files.platformio_ini.root.path)+1:]
   _emit_executable_action(ctx, project_run_dir)
 
-  return DefaultInfo(
-    default_runfiles=ctx.runfiles(files=[
+  default_info_files = [
       ctx.outputs.executable,
       output_files.main_cpp,
       output_files.platformio_ini,
@@ -318,7 +363,10 @@ def _platformio_project_impl(ctx):
       transitive=[
         dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps
       ]).to_list()
-    )
+  if output_files.fs_dir:
+    default_info_files.append(output_files.fs_dir)
+  return DefaultInfo(
+    default_runfiles=ctx.runfiles(files=default_info_files)
   )
 
 
@@ -502,6 +550,15 @@ A list of Bazel targets, the platformio_library targets that this one
 depends on.
 """,
       ),
+      "upload_fs": attr.label(
+        default = None,
+        mandatory = False,
+        allow_files = None,
+        allow_single_file = None,
+        doc = """
+Filegroup containing files to upload to the device's FS memory.
+"""
+      )
     },
     doc = """
 Defines a project that will be built and uploaded using PlatformIO.
