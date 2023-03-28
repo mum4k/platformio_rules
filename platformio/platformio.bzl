@@ -193,6 +193,7 @@ def _emit_ini_file_action(ctx, output_files):
     build_flags=build_flags,
     programmer=ctx.attr.programmer,
     port=ctx.attr.port,
+    lib_deps=ctx.attr.lib_deps,
   ).to_json()
   ctx.actions.run(
     outputs=[output_files.platformio_ini],
@@ -550,6 +551,14 @@ A list of Bazel targets, the platformio_library targets that this one
 depends on.
 """,
       ),
+      "lib_deps": attr.string_list(
+        allow_empty = True,
+        mandatory = False,
+        default = [],
+        doc = """
+A list of external (PlatformIO) libraries that this project depends on.
+""",
+      ),
       "upload_fs": attr.label(
         default = None,
         mandatory = False,
@@ -558,7 +567,7 @@ depends on.
         doc = """
 Filegroup containing files to upload to the device's FS memory.
 """
-      )
+      ),
     },
     doc = """
 Defines a project that will be built and uploaded using PlatformIO.

@@ -22,6 +22,10 @@ build_flags =
   {{ flag }}
 {%- endfor %}
 lib_ldf_mode = deep+
+lib_deps =
+{%- for lib in lib_deps %}
+  {{ lib }}
+{%- endfor %}
 platform = {{ platform }}
 board = {{ board }}
 framework = 
