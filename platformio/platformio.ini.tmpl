@@ -21,7 +21,7 @@ build_flags =
 {%- for flag in build_flags %}
   {{ flag }}
 {%- endfor %}
-lib_ldf_mode = deep+
+lib_ldf_mode = {{ lib_ldf_mode }}
 lib_deps =
 {%- for lib in lib_deps %}
   {{ lib }}

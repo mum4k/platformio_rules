@@ -193,6 +193,7 @@ def _emit_ini_file_action(ctx, output_files):
     build_flags=build_flags,
     programmer=ctx.attr.programmer,
     port=ctx.attr.port,
+    lib_ldf_mode=ctx.attr.lib_ldf_mode,
     lib_deps=ctx.attr.lib_deps,
   ).to_json()
   ctx.actions.run(
@@ -549,6 +550,14 @@ https://www.amazon.com/gp/product/B09DG384MK
         doc = """
 A list of Bazel targets, the platformio_library targets that this one
 depends on.
+""",
+      ),
+      "lib_ldf_mode": attr.string(
+        default = "deep+",
+        mandatory = False,
+        doc = """
+Library dependency finder for PlatformIO
+(https://docs.platformio.org/en/stable/librarymanager/ldf.html)
 """,
       ),
       "lib_deps": attr.string_list(
