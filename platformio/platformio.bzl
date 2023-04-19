@@ -73,6 +73,16 @@ _FS_UPLOAD_COMMAND="platformio run -s -d {project_dir} -t uploadfs"
 _SHELL_HEADER="""#!/bin/bash"""
 
 
+PlatformIOLibraryInfo = provider(
+  "Information needed to define a PlatformIO library.",
+  fields={
+    "default_runfiles":
+      "Files needed to execute anything depending on this library.",
+    "transitive_libdeps":
+      "External platformIO libraries needed by this library.",
+  }
+)
+
 def _platformio_library_impl(ctx):
   """Collects all transitive dependencies and emits the zip output.
 
@@ -133,11 +143,16 @@ def _platformio_library_impl(ctx):
 
   # Collect the zip files produced by all transitive dependancies.
   transitive_zip_files=[
-    dep[DefaultInfo].default_runfiles for dep in ctx.attr.deps]
+    dep[PlatformIOLibraryInfo].default_runfiles for dep in ctx.attr.deps]
   runfiles=ctx.runfiles(files=[ctx.outputs.zip])
   runfiles=runfiles.merge_all(transitive_zip_files)
-  return DefaultInfo(
+  transitive_libdeps=[]
+  transitive_libdeps.extend(ctx.attr.lib_deps)
+  for dep in ctx.attr.deps:
+    transitive_libdeps.extend(dep[PlatformIOLibraryInfo].transitive_libdeps)
+  return PlatformIOLibraryInfo(
     default_runfiles=runfiles,
+    transitive_libdeps=transitive_libdeps,
   )
 
 
@@ -185,6 +200,10 @@ def _emit_ini_file_action(ctx, output_files):
       if flag == "":
           continue
       build_flags.append(flag)
+  lib_deps=[]
+  lib_deps.extend(ctx.attr.lib_deps)
+  for dep in ctx.attr.deps:
+    lib_deps.extend(dep[PlatformIOLibraryInfo].transitive_libdeps)
   substitutions = struct(
     board=ctx.attr.board,
     platform=ctx.attr.platform,
@@ -194,7 +213,7 @@ def _emit_ini_file_action(ctx, output_files):
     programmer=ctx.attr.programmer,
     port=ctx.attr.port,
     lib_ldf_mode=ctx.attr.lib_ldf_mode,
-    lib_deps=ctx.attr.lib_deps,
+    lib_deps=lib_deps,
   ).to_json()
   ctx.actions.run(
     outputs=[output_files.platformio_ini],
@@ -264,7 +283,7 @@ def _emit_build_action(ctx, project_dir, output_files):
   """
   transitive_zip_files=depset(
     transitive=[
-      dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps
+      dep[PlatformIOLibraryInfo].default_runfiles.files for dep in ctx.attr.deps
   ])
 
   commands = []
@@ -314,7 +333,7 @@ def _emit_executable_action(ctx, project_dir):
   # This however won't work when executed directly.
   transitive_zip_files=depset(
     transitive=[
-      dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps
+      dep[PlatformIOLibraryInfo].default_runfiles.files for dep in ctx.attr.deps
   ])
 
   commands = [_SHELL_HEADER]
@@ -363,7 +382,7 @@ def _platformio_project_impl(ctx):
       output_files.firmware_elf,
     ] + depset(
       transitive=[
-        dep[DefaultInfo].default_runfiles.files for dep in ctx.attr.deps
+        dep[PlatformIOLibraryInfo].default_runfiles.files for dep in ctx.attr.deps
       ]).to_list()
   if output_files.fs_dir:
     default_info_files.append(output_files.fs_dir)
@@ -402,9 +421,19 @@ A list of labels, additional source files to include in the resulting zip file.
 """,
     ),
     "deps": attr.label_list(
-        providers=[DefaultInfo],
+        providers=[DefaultInfo, PlatformIOLibraryInfo],
         doc = """
 A list of Bazel targets, other platformio_library targets that this one depends on.
+""",
+    ),
+    "lib_deps": attr.string_list(
+      allow_empty = True,
+      mandatory = False,
+      default = [],
+      doc = """
+A list of external (PlatformIO) libraries that this library depends on. These
+libraries will be added to any platformio_project() rules that directly or
+indirectly link this library.
 """,
     ),
   },
@@ -546,7 +575,7 @@ https://www.amazon.com/gp/product/B09DG384MK
 """,
       ),
       "deps": attr.label_list(
-        providers=[DefaultInfo],
+        providers=[PlatformIOLibraryInfo],
         doc = """
 A list of Bazel targets, the platformio_library targets that this one
 depends on.
@@ -557,7 +586,7 @@ depends on.
         mandatory = False,
         doc = """
 Library dependency finder for PlatformIO
-(https://docs.platformio.org/en/stable/librarymanager/ldf.html)
+(https://docs.platformio.org/en/stable/librarymanager/ldf.html).
 """,
       ),
       "lib_deps": attr.string_list(
