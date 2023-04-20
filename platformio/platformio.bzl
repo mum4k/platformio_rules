@@ -132,9 +132,10 @@ def _platformio_library_impl(ctx):
         source=ctx.file.src.path, destination=source_file.path))
  
   # Zip the entire content of the library folder.
-  outputs.append(ctx.outputs.zip)
+  zip_file = ctx.actions.declare_file("%s.zip" % ctx.attr.name)
+  outputs.append(zip_file)
   commands.append(_ZIP_COMMAND.format(
-      output_dir=ctx.outputs.zip.dirname, zip_filename=ctx.outputs.zip.basename))
+      output_dir=zip_file.dirname, zip_filename=zip_file.basename))
   ctx.actions.run_shell(
       inputs=inputs,
       outputs=outputs,
@@ -144,7 +145,7 @@ def _platformio_library_impl(ctx):
   # Collect the zip files produced by all transitive dependancies.
   transitive_zip_files=[
     dep[PlatformIOLibraryInfo].default_runfiles for dep in ctx.attr.deps]
-  runfiles=ctx.runfiles(files=[ctx.outputs.zip])
+  runfiles=ctx.runfiles(files=[zip_file])
   runfiles=runfiles.merge_all(transitive_zip_files)
   transitive_libdeps=[]
   transitive_libdeps.extend(ctx.attr.lib_deps)
@@ -393,9 +394,6 @@ def _platformio_project_impl(ctx):
 
 platformio_library = rule(
   implementation=_platformio_library_impl,
-  outputs = {
-      "zip": "%{name}.zip",
-  },
   attrs={
     "hdr": attr.label(
         allow_single_file=[".h", ".hpp"],
