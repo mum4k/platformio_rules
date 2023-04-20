@@ -7,6 +7,46 @@ These are Bazel Starlark rules for building and uploading
 [PlatformIO](http://platformio.org/) build system.
 
 
+<a id="platformio_fs"></a>
+
+## platformio_fs
+
+<pre>
+platformio_fs(<a href="#platformio_fs-name">name</a>, <a href="#platformio_fs-board">board</a>, <a href="#platformio_fs-data">data</a>, <a href="#platformio_fs-framework">framework</a>, <a href="#platformio_fs-platform">platform</a>, <a href="#platformio_fs-port">port</a>, <a href="#platformio_fs-programmer">programmer</a>)
+</pre>
+
+
+Defines data that will be uploaded to the microcontroller's filesystem using
+PlatformIO.
+
+Creates, configures and runs a PlatformIO project. This is equivalent to running:
+
+```
+platformio run
+```
+
+This rule is executable and when executed, it will upload the provided data to
+the connected Arduino device. This is equivalent to running:
+
+```
+platformio run -t uploadfs
+```
+
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="platformio_fs-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="platformio_fs-board"></a>board |  A string, name of the Arduino board to build this project for. You can find the supported boards in the [PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is mandatory.   | String | required |  |
+| <a id="platformio_fs-data"></a>data |  Filegroup containing files to upload to the device's FS memory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="platformio_fs-framework"></a>framework |  A string, the name of the [framework]( http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for this project.   | String | optional | <code>"arduino"</code> |
+| <a id="platformio_fs-platform"></a>platform |  A string, the name of the [development platform]( http://docs.platformio.org/en/latest/platforms/index.html#platforms) for this project.   | String | optional | <code>"atmelavr"</code> |
+| <a id="platformio_fs-port"></a>port |  Port where your microcontroller is connected. This field is mandatory if you are using arduino_as_isp as your programmer.   | String | optional | <code>""</code> |
+| <a id="platformio_fs-programmer"></a>programmer |  Type of programmer to use: - direct: Use the USB connection in the microcontroller deveopment board to program it - arduino_as_isp: Use an arduino programmed with the Arduino as ISP code to in-circuit program another microcontroller (see https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details). - usbtinyisp: Use an USBTinyISP programmer, like https://www.amazon.com/gp/product/B09DG384MK   | String | optional | <code>"direct"</code> |
+
+
 <a id="platformio_library"></a>
 
 ## platformio_library
@@ -79,7 +119,7 @@ expected by PlatformIO.
 
 <pre>
 platformio_project(<a href="#platformio_project-name">name</a>, <a href="#platformio_project-board">board</a>, <a href="#platformio_project-build_flags">build_flags</a>, <a href="#platformio_project-deps">deps</a>, <a href="#platformio_project-environment_kwargs">environment_kwargs</a>, <a href="#platformio_project-framework">framework</a>, <a href="#platformio_project-lib_deps">lib_deps</a>,
-                   <a href="#platformio_project-lib_ldf_mode">lib_ldf_mode</a>, <a href="#platformio_project-platform">platform</a>, <a href="#platformio_project-port">port</a>, <a href="#platformio_project-programmer">programmer</a>, <a href="#platformio_project-src">src</a>, <a href="#platformio_project-upload_fs">upload_fs</a>)
+                   <a href="#platformio_project-lib_ldf_mode">lib_ldf_mode</a>, <a href="#platformio_project-platform">platform</a>, <a href="#platformio_project-port">port</a>, <a href="#platformio_project-programmer">programmer</a>, <a href="#platformio_project-src">src</a>)
 </pre>
 
 
@@ -121,7 +161,6 @@ uploading.
 | <a id="platformio_project-port"></a>port |  Port where your microcontroller is connected. This field is mandatory if you are using arduino_as_isp as your programmer.   | String | optional | <code>""</code> |
 | <a id="platformio_project-programmer"></a>programmer |  Type of programmer to use: - direct: Use the USB connection in the microcontroller deveopment board to program it - arduino_as_isp: Use an arduino programmed with the Arduino as ISP code to in-circuit program another microcontroller (see https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details). - usbtinyisp: Use an USBTinyISP programmer, like https://www.amazon.com/gp/product/B09DG384MK   | String | optional | <code>"direct"</code> |
 | <a id="platformio_project-src"></a>src |  A string, the name of the C++ source file, the main file for  the project that contains the Arduino setup() and loop() functions. This is mandatory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
-| <a id="platformio_project-upload_fs"></a>upload_fs |  Filegroup containing files to upload to the device's FS memory.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
 
 
 <a id="PlatformIOLibraryInfo"></a>
