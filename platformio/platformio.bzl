@@ -170,22 +170,18 @@ def _declare_outputs(ctx):
   platformio_ini = ctx.actions.declare_file("%s/platformio.ini" % dirname)
   main_cpp = ctx.actions.declare_file("%s/src/main.cpp" % dirname)
   firmware_elf = ctx.actions.declare_file("%s/.pio/build/%s/firmware.elf" %  (dirname, ctx.attr.board))
-  fs_dir = None
-  if ctx.attr.upload_fs:
-    fs_dir = ctx.actions.declare_directory("%s/data/" % dirname)
   return struct(
     main_cpp=main_cpp,
     platformio_ini=platformio_ini,
-    firmware_elf=firmware_elf,
-    fs_dir=fs_dir)
+    firmware_elf=firmware_elf)
 
 
-def _emit_ini_file_action(ctx, output_files):
+def _emit_ini_file_action(ctx, platformio_ini):
   """Emits a Bazel action that generates the PlatformIO configuration file.
 
   Args:
     ctx: The Starlark context.
-    output_files: List of output files declared by ctx.actions.declare_file().
+    platformio_ini: Declared output for the platformio.ini file.
   """
   environment_kwargs = []
   if ctx.attr.environment_kwargs:
@@ -217,12 +213,12 @@ def _emit_ini_file_action(ctx, output_files):
     lib_deps=lib_deps,
   ).to_json()
   ctx.actions.run(
-    outputs=[output_files.platformio_ini],
+    outputs=[platformio_ini],
     inputs=[ctx.file._platformio_ini_tmpl],
     executable=ctx.executable._template_renderer,
     arguments=[
       ctx.file._platformio_ini_tmpl.path,
-      output_files.platformio_ini.path,
+      platformio_ini.path,
       substitutions
     ],
   )
@@ -240,36 +236,6 @@ def _emit_main_file_action(ctx, output_files):
       outputs=[output_files.main_cpp],
       command=_COPY_COMMAND.format(
           source=ctx.file.src.path, destination=output_files.main_cpp.path),
-  )
-
-
-def _emit_upload_fs_copy_action(ctx, output_files):
-  """Emits a Bazel action that creates the folder with data to upload to the FS
-
-  Args:
-    ctx: The Starlark context.
-    output_files: List of output files declared by ctx.actions.declare_file().
-  """
-  if not output_files.fs_dir:
-    return
-  
-  commands = []
-  commands.append(
-    _MAKE_DIR_COMMAND.format(dirname=output_files.fs_dir.path))
-  fs_files = depset(transitive=[
-    ctx.attr.upload_fs[DefaultInfo].default_runfiles.files
-  ]).to_list()
-  input_files=[]
-  for file in fs_files:
-    input_files.append(file)
-    commands.append(
-      _COPY_COMMAND.format(
-        source=file.path,
-        destination=output_files.fs_dir.path))
-  ctx.actions.run_shell(
-    outputs=[output_files.fs_dir],
-    inputs=input_files,
-    command="\n".join(commands),
   )
 
 
@@ -342,8 +308,6 @@ def _emit_executable_action(ctx, project_dir):
     commands.append(_UNZIP_COMMAND.format(
         project_dir=project_dir, zip_filename=zip_file.short_path))
   commands.append(_UPLOAD_COMMAND.format(project_dir=project_dir))
-  if ctx.attr.upload_fs:
-    commands.append(_FS_UPLOAD_COMMAND.format(project_dir=project_dir))
   ctx.actions.write(
     output=ctx.outputs.executable,
     content="\n".join(commands),
@@ -363,9 +327,8 @@ def _platformio_project_impl(ctx):
     ctx: The Starlark context.
   """
   output_files = _declare_outputs(ctx)
-  _emit_ini_file_action(ctx, output_files)
+  _emit_ini_file_action(ctx, output_files.platformio_ini)
   _emit_main_file_action(ctx, output_files)
-  _emit_upload_fs_copy_action(ctx, output_files)
 
   # Determine the build directory used by Bazel, that is the directory where
   # our output files will be placed.
@@ -385,10 +348,100 @@ def _platformio_project_impl(ctx):
       transitive=[
         dep[PlatformIOLibraryInfo].default_runfiles.files for dep in ctx.attr.deps
       ]).to_list()
-  if output_files.fs_dir:
-    default_info_files.append(output_files.fs_dir)
   return DefaultInfo(
     default_runfiles=ctx.runfiles(files=default_info_files)
+  )
+
+
+def _emit_upload_fs_ini_file_action(ctx, platformio_ini):
+  """Emits a Bazel action that generates the PlatformIO configuration file.
+
+  Args:
+    ctx: The Starlark context.
+    platformio_ini: Declared output for the platformio.ini file.
+  """
+  substitutions = struct(
+    board=ctx.attr.board,
+    platform=ctx.attr.platform,
+    framework=ctx.attr.framework,
+    environment_kwargs=[],
+    build_flags=[],
+    programmer=ctx.attr.programmer,
+    port=ctx.attr.port,
+    lib_ldf_mode="deep+",
+    lib_deps=[],
+  ).to_json()
+  ctx.actions.run(
+    outputs=[platformio_ini],
+    inputs=[ctx.file._platformio_ini_tmpl],
+    executable=ctx.executable._template_renderer,
+    arguments=[
+      ctx.file._platformio_ini_tmpl.path,
+      platformio_ini.path,
+      substitutions
+    ],
+  )
+
+
+def _emit_upload_fs_copy_action(ctx, fs_dir):
+  """Emits a Bazel action that creates the folder with data to upload to the FS
+
+  Args:
+    ctx: The Starlark context.
+    fs_dir: Directory where the files to be copied to the filesystem are to be
+      copied.
+  """
+  commands = []
+  commands.append(
+    _MAKE_DIR_COMMAND.format(dirname=fs_dir.path))
+  fs_files = depset(transitive=[
+    ctx.attr.data[DefaultInfo].default_runfiles.files
+  ]).to_list()
+  input_files=[]
+  for file in fs_files:
+    input_files.append(file)
+    commands.append(
+      _COPY_COMMAND.format(
+        source=file.path,
+        destination=fs_dir.path))
+  ctx.actions.run_shell(
+    outputs=[fs_dir],
+    inputs=input_files,
+    command="\n".join(commands),
+  )
+
+
+def _emit_upload_fs_executable_action(ctx, project_dir):
+  """Emits a Bazel action that produces executable script.
+
+  When the script is executed, the compiled firmware gets uploaded to the
+  Arduino device.
+
+  Args:
+    ctx: The Starlark context.
+    project_dir: A string, the main directory of the PlatformIO project.
+      This is where the zip files will be extracted.
+  """
+  commands = [_SHELL_HEADER]
+  commands.append(_FS_UPLOAD_COMMAND.format(project_dir=project_dir))
+  ctx.actions.write(
+    output=ctx.outputs.executable,
+    content="\n".join(commands),
+    is_executable=True,
+  )
+
+
+def _platformio_fs_impl(ctx):
+  dirname = "%s_workdir" % ctx.attr.name
+  platformio_ini = ctx.actions.declare_file("%s/platformio.ini" % dirname)
+  fs_dir = ctx.actions.declare_directory("%s/data/" % dirname)
+  _emit_upload_fs_ini_file_action(ctx, platformio_ini)
+  _emit_upload_fs_copy_action(ctx, fs_dir)
+  _emit_upload_fs_executable_action(
+    ctx,
+    "./%s" % platformio_ini.dirname[len(platformio_ini.root.path)+1:])
+  return DefaultInfo(
+    default_runfiles=ctx.runfiles(files=[ctx.outputs.executable, platformio_ini, fs_dir])
   )
 
 
@@ -481,87 +534,87 @@ expected by PlatformIO.
 )
 
 platformio_project = rule(
-    implementation=_platformio_project_impl,
-    executable=True,
-    attrs={
-      "_platformio_ini_tmpl": attr.label(
-        default=Label("//platformio:platformio_ini_tmpl"),
-        allow_single_file=True,
-      ),
-      "_template_renderer": attr.label(
-        default=Label("//platformio:template_renderer"),
-        executable=True,
-        cfg="exec",
-      ),
-      "src": attr.label(
-        allow_single_file=[".cc"],
-        mandatory=True,
-        doc = """
+  implementation=_platformio_project_impl,
+  executable=True,
+  attrs={
+    "_platformio_ini_tmpl": attr.label(
+      default=Label("//platformio:platformio_ini_tmpl"),
+      allow_single_file=True,
+    ),
+    "_template_renderer": attr.label(
+      default=Label("//platformio:template_renderer"),
+      executable=True,
+      cfg="exec",
+    ),
+    "src": attr.label(
+      allow_single_file=[".cc"],
+      mandatory=True,
+      doc = """
 A string, the name of the C++ source file, the main file for 
 the project that contains the Arduino setup() and loop() functions. This is mandatory.
 """,
-      ),
-      "board": attr.string(
-        mandatory=True,
-        doc = """
+    ),
+    "board": attr.string(
+      mandatory=True,
+      doc = """
 A string, name of the Arduino board to build this project for. You can
 find the supported boards in the
 [PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is
 mandatory.
 """,
-      ),
-      "port": attr.string(
-        doc = """
+    ),
+    "port": attr.string(
+      doc = """
 Port where your microcontroller is connected. This field is mandatory if you
 are using arduino_as_isp as your programmer.
 """,
-      ),
-      "platform": attr.string(
-        default="atmelavr",
-        doc = """
+    ),
+    "platform": attr.string(
+      default="atmelavr",
+      doc = """
 A string, the name of the
 [development platform](
 http://docs.platformio.org/en/latest/platforms/index.html#platforms) for
 this project.
 """,
-      ),
-      "framework": attr.string(
-        default="arduino",
-        doc = """
+    ),
+    "framework": attr.string(
+      default="arduino",
+      doc = """
 A string, the name of the
 [framework](
 http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for
 this project.
 """,
-      ),
-      "environment_kwargs": attr.string_dict(
-        allow_empty=True,
-        doc = """
+    ),
+    "environment_kwargs": attr.string_dict(
+      allow_empty=True,
+      doc = """
 A dictionary of strings to strings, any provided keys and
 values will directly appear in the generated platformio.ini file under the
 env:board section. Refer to the [Project Configuration File manual](
 http://docs.platformio.org/en/latest/projectconf.html) for the available
 options.
 """,
-      ),
-      "build_flags": attr.string_list(
-        allow_empty = True,
-        doc = """
+    ),
+    "build_flags": attr.string_list(
+      allow_empty = True,
+      doc = """
 A list of strings, any provided strings will directly appear in the
 generated platformio.ini file in the build_flags option for the selected
 env:board section. Refer to the [Project Configuration File manual](
 http://docs.platformio.org/en/latest/projectconf.html) for the available
 options.
 """,
-      ),
-      "programmer": attr.string(
-        default = "direct",
-        values = [
-          "arduino_as_isp",
-          "direct",
-          "usbtinyisp",
-        ],
-        doc = """
+    ),
+    "programmer": attr.string(
+      default = "direct",
+      values = [
+        "arduino_as_isp",
+        "direct",
+        "usbtinyisp",
+      ],
+      doc = """
 Type of programmer to use:
 - direct: Use the USB connection in the microcontroller deveopment board to
 program it
@@ -571,41 +624,32 @@ https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details).
 - usbtinyisp: Use an USBTinyISP programmer, like
 https://www.amazon.com/gp/product/B09DG384MK
 """,
-      ),
-      "deps": attr.label_list(
-        providers=[PlatformIOLibraryInfo],
-        doc = """
+    ),
+    "deps": attr.label_list(
+      providers=[PlatformIOLibraryInfo],
+      doc = """
 A list of Bazel targets, the platformio_library targets that this one
 depends on.
 """,
-      ),
-      "lib_ldf_mode": attr.string(
-        default = "deep+",
-        mandatory = False,
-        doc = """
+    ),
+    "lib_ldf_mode": attr.string(
+      default = "deep+",
+      mandatory = False,
+      doc = """
 Library dependency finder for PlatformIO
 (https://docs.platformio.org/en/stable/librarymanager/ldf.html).
 """,
-      ),
-      "lib_deps": attr.string_list(
-        allow_empty = True,
-        mandatory = False,
-        default = [],
-        doc = """
+    ),
+    "lib_deps": attr.string_list(
+      allow_empty = True,
+      mandatory = False,
+      default = [],
+      doc = """
 A list of external (PlatformIO) libraries that this project depends on.
 """,
-      ),
-      "upload_fs": attr.label(
-        default = None,
-        mandatory = False,
-        allow_files = None,
-        allow_single_file = None,
-        doc = """
-Filegroup containing files to upload to the device's FS memory.
-"""
-      ),
-    },
-    doc = """
+    ),
+  },
+  doc = """
 Defines a project that will be built and uploaded using PlatformIO.
 
 Creates, configures and runs a PlatformIO project. This is equivalent to running:
@@ -625,5 +669,98 @@ project configuration file for PlatformIO and the firmware. The firmware_elf
 is the compiled version of the Arduino firmware for the specified board and
 the firmware_hex is the firmware in the hexadecimal format ready for
 uploading.
+"""
+)
+
+platformio_fs = rule(
+  implementation=_platformio_fs_impl,
+  executable=True,
+  attrs={
+    "_platformio_ini_tmpl": attr.label(
+      default=Label("//platformio:platformio_ini_tmpl"),
+      allow_single_file=True,
+    ),
+    "_template_renderer": attr.label(
+      default=Label("//platformio:template_renderer"),
+      executable=True,
+      cfg="exec",
+    ),
+    "board": attr.string(
+      mandatory=True,
+      doc = """
+A string, name of the Arduino board to build this project for. You can
+find the supported boards in the
+[PlatformIO Embedded Boards Explorer](http://platformio.org/boards). This is
+mandatory.
+""",
+    ),
+    "port": attr.string(
+      doc = """
+Port where your microcontroller is connected. This field is mandatory if you
+are using arduino_as_isp as your programmer.
+""",
+    ),
+    "platform": attr.string(
+      default="atmelavr",
+      doc = """
+A string, the name of the
+[development platform](
+http://docs.platformio.org/en/latest/platforms/index.html#platforms) for
+this project.
+""",
+    ),
+    "framework": attr.string(
+      default="arduino",
+      doc = """
+A string, the name of the
+[framework](
+http://docs.platformio.org/en/latest/frameworks/index.html#frameworks) for
+this project.
+""",
+    ),
+    "programmer": attr.string(
+      default = "direct",
+      values = [
+        "arduino_as_isp",
+        "direct",
+        "usbtinyisp",
+      ],
+      doc = """
+Type of programmer to use:
+- direct: Use the USB connection in the microcontroller deveopment board to
+program it
+- arduino_as_isp: Use an arduino programmed with the Arduino as ISP code to
+in-circuit program another microcontroller (see
+https://docs.arduino.cc/built-in-examples/arduino-isp/ArduinoISP for details).
+- usbtinyisp: Use an USBTinyISP programmer, like
+https://www.amazon.com/gp/product/B09DG384MK
+""",
+    ),
+    "data": attr.label(
+      default = None,
+      mandatory = True,
+      allow_files = None,
+      allow_single_file = None,
+      doc = """
+Filegroup containing files to upload to the device's FS memory.
+"""
+    ),
+  },
+  doc = """
+Defines data that will be uploaded to the microcontroller's filesystem using
+PlatformIO.
+
+Creates, configures and runs a PlatformIO project. This is equivalent to running:
+
+```
+platformio run
+```
+
+This rule is executable and when executed, it will upload the provided data to
+the connected Arduino device. This is equivalent to running:
+
+```
+platformio run -t uploadfs
+```
 """
 )
