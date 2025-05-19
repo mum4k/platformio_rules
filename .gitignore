@@ -6,3 +6,5 @@
 
 # Ignore VSCode files
 .vscode
+
+.clwb
