@@ -1,6 +1,6 @@
 module(name = "platformio_rules")
 
-p = use_extension("//:bazel:deps.bzl", "platformio_rules_dependencies")
-pt = use_extension("//:bazel:transitive.bzl", "platformio_rules_transitive_dependencies")
-ptt = use_extension("//:bazel:pip_parse.bzl", "platformio_rules_pip_parse_dependencies")
-pttt = use_extension("//:bazel:pip_install.bzl", "platformio_rules_pip_install_dependencies")
+p = use_extension("//bazel:deps.bzl", "platformio_rules_dependencies")
+pt = use_extension("//bazel:transitive.bzl", "platformio_rules_transitive_dependencies")
+ptt = use_extension("//bazel:pip_parse.bzl", "platformio_rules_pip_parse_dependencies")
+pttt = use_extension("//bazel:pip_install.bzl", "platformio_rules_pip_install_dependencies")
