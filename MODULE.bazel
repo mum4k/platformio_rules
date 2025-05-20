@@ -5,12 +5,11 @@ bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "stardoc", version = "0.8.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.toolchain(python_version = "3.10", is_default = True)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
     hub_name = "py_deps",
-    python_version = "3.10",
+    python_version = "3.12",
     requirements_lock = "//:requirements_lock.txt",
 )
 use_repo(pip, "py_deps")
