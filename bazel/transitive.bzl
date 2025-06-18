@@ -12,8 +12,8 @@ def platformio_rules_transitive_dependencies():
     # Select the Python toolchain that will be used for template rendering. This
     # is required for pip_parse() to be executed
     python_register_toolchains(
-        name = "python3_10_8",
+        name = "python_3_12",
         # Available versions are listed in @rules_python//python:versions.bzl.
         # We recommend using the same version your team is already standardized on.
-        python_version = "3.10.8",
+        python_version = "3.12",
     )

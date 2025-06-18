@@ -130,7 +130,7 @@ def _platformio_library_impl(ctx):
     outputs.append(source_file)
     commands.append(_COPY_COMMAND.format(
         source=ctx.file.src.path, destination=source_file.path))
- 
+
   # Zip the entire content of the library folder.
   zip_file = ctx.actions.declare_file("%s.zip" % ctx.attr.name)
   outputs.append(zip_file)
@@ -201,7 +201,7 @@ def _emit_ini_file_action(ctx, platformio_ini):
   lib_deps.extend(ctx.attr.lib_deps)
   for dep in ctx.attr.deps:
     lib_deps.extend(dep[PlatformIOLibraryInfo].transitive_libdeps)
-  substitutions = struct(
+  substitutions = json.encode(struct(
     board=ctx.attr.board,
     platform=ctx.attr.platform,
     framework=ctx.attr.framework,
@@ -211,7 +211,7 @@ def _emit_ini_file_action(ctx, platformio_ini):
     port=ctx.attr.port,
     lib_ldf_mode=ctx.attr.lib_ldf_mode,
     lib_deps=lib_deps,
-  ).to_json()
+  ))
   ctx.actions.run(
     outputs=[platformio_ini],
     inputs=[ctx.file._platformio_ini_tmpl],
@@ -273,7 +273,7 @@ def _emit_build_action(ctx, project_dir, output_files):
         "PATH":"/bin:/usr/bin:/usr/local/bin:/usr/sbin:/sbin",
 
         # Changes the Encoding to allow PlatformIO's Click to work as expected
-        # See https://github.com/mum4k/platformio_rules/issues/22 
+        # See https://github.com/mum4k/platformio_rules/issues/22
         "LC_ALL":"C.UTF-8",
         "LANG":"C.UTF-8",
       },
@@ -360,7 +360,7 @@ def _emit_upload_fs_ini_file_action(ctx, platformio_ini):
     ctx: The Starlark context.
     platformio_ini: Declared output for the platformio.ini file.
   """
-  substitutions = struct(
+  substitutions = json.encode(struct(
     board=ctx.attr.board,
     platform=ctx.attr.platform,
     framework=ctx.attr.framework,
@@ -370,7 +370,7 @@ def _emit_upload_fs_ini_file_action(ctx, platformio_ini):
     port=ctx.attr.port,
     lib_ldf_mode="deep+",
     lib_deps=[],
-  ).to_json()
+  ))
   ctx.actions.run(
     outputs=[platformio_ini],
     inputs=[ctx.file._platformio_ini_tmpl],
@@ -550,7 +550,7 @@ platformio_project = rule(
       allow_single_file=[".cc"],
       mandatory=True,
       doc = """
-A string, the name of the C++ source file, the main file for 
+A string, the name of the C++ source file, the main file for
 the project that contains the Arduino setup() and loop() functions. This is mandatory.
 """,
     ),

@@ -7,16 +7,21 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # which cannot be done in a function, but this is the first step of the process
 def platformio_rules_dependencies():
     # Import Stardoc, to write the documentation to our Starlark rules
-    git_repository(
+
+    http_archive(
         name = "io_bazel_stardoc",
-        remote = "https://github.com/bazelbuild/stardoc.git",
-        tag = "0.5.3",
+        sha256 = "ca933f39f2a6e0ad392fa91fd662545afcbd36c05c62365538385d35a0323096",
+        urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/stardoc/releases/download/0.8.0/stardoc-0.8.0.tar.gz",
+            "https://github.com/bazelbuild/stardoc/releases/download/0.8.0/stardoc-0.8.0.tar.gz",
+        ],
     )
+
     # Import python, this is the first step to get pip_parse() dependencies to
     # be corrently imported
     http_archive(
         name = "rules_python",
-        sha256 = "81cbfc16dd1c022c4761267fa8b2feb881aaea9c3e1143f2e64630a1ad18c347",
-        strip_prefix = "rules_python-0.16.1",
-        url = "https://github.com/bazelbuild/rules_python/archive/0.16.1.zip",
+        sha256 = "2cc26bbd53854ceb76dd42a834b1002cd4ba7f8df35440cf03482e045affc244",
+        strip_prefix = "rules_python-1.3.0",
+        url = "https://github.com/bazel-contrib/rules_python/releases/download/1.3.0/rules_python-1.3.0.tar.gz",
     )

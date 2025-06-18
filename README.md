@@ -28,7 +28,28 @@ The first three ar usually available on any linux system. The platformio
 command is added by [installing
 PlatformIO](http://docs.platformio.org/en/latest/installation.html).
 
-## Setup
+
+## Setup - Bzlmod
+
+In order to use these Bazel rules, you must add this repository as a `bazel_dep` and override it with a
+`archive_override` in your `MODULE.bazel` file.
+
+### Modify the MODULE file
+
+See [Releases](https://github.com/mum4k/platformio_rules/releases) for the most up to date version to update sha256.
+*Below example targets commit `73bca0dbb0942f8c275721269a9c3c6b581e6868`*
+```
+bazel_dep(name = "platformio_rules", repo_name = "platformio_rules")
+archive_override(
+    module_name = "platformio_rules",
+    sha256 = "f9cdb89e467d01a30787883c8183d022ba0a63f320ae495db3f9966c6aa23328",
+    strip_prefix = "platformio_rules-73bca0dbb0942f8c275721269a9c3c6b581e6868",
+    url = "https://github.com/mum4k/platformio_rules/archive/73bca0dbb0942f8c275721269a9c3c6b581e6868.tar.gz",
+)
+```
+
+
+## Setup - WORKSPACE
 
 In order to use these Bazel rules, you must add this git repository to your
 WORKSPACE file and load the platformio rule definition in every BUILD file
