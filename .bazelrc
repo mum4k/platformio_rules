@@ -6,5 +6,4 @@ build --verbose_failures
 # fails to run tests.
 build --spawn_strategy=standalone --genrule_strategy=standalone
 test --test_strategy=standalone
-common --noenable_bzlmod
-common --enable_workspace
+common --enable_bzlmod
